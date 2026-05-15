@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# This file is managed by @ivan-cholakov/git-hooks.
+# Do not edit by hand - bumps to the package overwrite this file on
+# the next `pnpm install`. To change what's validated, update the
+# package's `src/run.ts` and cut a release.
+npx --no-install ivan-git-hooks run commit-msg "$1"

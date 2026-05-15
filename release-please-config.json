@@ -1,0 +1,37 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"include-component-in-tag": true,
+	"include-v-in-tag": true,
+	"separate-pull-requests": false,
+	"packages": {
+		"packages/squid-common": {
+			"release-type": "node",
+			"package-name": "@ivan-cholakov/squid-common",
+			"component": "squid-common"
+		},
+		"packages/tsconfig": {
+			"release-type": "node",
+			"package-name": "@ivan-cholakov/tsconfig",
+			"component": "tsconfig"
+		},
+		"packages/biome-config": {
+			"release-type": "node",
+			"package-name": "@ivan-cholakov/biome-config",
+			"component": "biome-config"
+		},
+		"packages/git-hooks": {
+			"release-type": "node",
+			"package-name": "@ivan-cholakov/git-hooks",
+			"component": "git-hooks"
+		}
+	},
+	"changelog-sections": [
+		{ "type": "feat", "section": "Features" },
+		{ "type": "fix", "section": "Bug Fixes" },
+		{ "type": "refactor", "section": "Refactors" },
+		{ "type": "perf", "section": "Performance" },
+		{ "type": "deps", "section": "Dependencies" },
+		{ "type": "docs", "section": "Documentation", "hidden": false },
+		{ "type": "chore", "section": "Chores", "hidden": true }
+	]
+}

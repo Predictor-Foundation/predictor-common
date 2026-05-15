@@ -1,0 +1,6 @@
+# Copy to .npmrc and replace ${GITHUB_TOKEN} with a personal access token
+# that has `read:packages` scope (CI sets GITHUB_TOKEN automatically).
+#
+# Consumers of @ivan-cholakov/* packages need this file at their repo root.
+@ivan-cholakov:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}

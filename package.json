@@ -1,0 +1,23 @@
+{
+	"name": "predictor-common",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Shared TypeScript/Subsquid platform for the Predictor Foundation",
+	"scripts": {
+		"build": "pnpm -r build",
+		"clean": "pnpm -r exec rm -rf node_modules lib dist tsconfig.tsbuildinfo && rm -rf node_modules",
+		"lint": "biome check .",
+		"lint:fix": "biome check . --write",
+		"format": "biome format . --write",
+		"format:check": "biome format ."
+	},
+	"engines": {
+		"node": ">=20",
+		"pnpm": ">=8"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.14",
+		"typescript": "^5.6.0"
+	},
+	"packageManager": "pnpm@9.0.0"
+}

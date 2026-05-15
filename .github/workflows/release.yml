@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  id-token: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@ivan-cholakov"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: build
+        run: pnpm -r build
+
+      - name: publish released packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
+        run: |
+          # paths_released is a JSON array of package directories
+          echo "$PATHS_RELEASED" | jq -r '.[]' | while read -r pkg_path; do
+            echo "publishing $pkg_path"
+            cd "$GITHUB_WORKSPACE/$pkg_path"
+            pnpm publish --no-git-checks --access restricted
+            cd "$GITHUB_WORKSPACE"
+          done

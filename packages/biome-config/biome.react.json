@@ -1,0 +1,13 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+	"extends": ["./biome.base.json"],
+	"linter": {
+		"rules": {
+			"correctness": {
+				"useJsxKeyInIterable": "off",
+				"useHookAtTopLevel": "off"
+			},
+			"a11y": "warn"
+		}
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "@ivan-cholakov/tsconfig/node",
+	"extends": "./base.json",
+	"compilerOptions": {
+		"types": ["node"],
+		"incremental": true
+	}
+}

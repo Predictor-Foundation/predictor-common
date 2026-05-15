@@ -1,0 +1,11 @@
+node_modules/
+lib/
+dist/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+*.log
+.turbo/
+.npmrc
+!.npmrc.example

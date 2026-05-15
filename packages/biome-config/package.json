@@ -1,0 +1,27 @@
+{
+	"name": "@ivan-cholakov/biome-config",
+	"version": "0.1.0",
+	"description": "Shared Biome lint + format presets for the Predictor Foundation",
+	"license": "UNLICENSED",
+	"private": false,
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"files": [
+		"biome.base.json",
+		"biome.subsquid.json",
+		"biome.react.json",
+		"README.md"
+	],
+	"exports": {
+		"./base": "./biome.base.json",
+		"./subsquid": "./biome.subsquid.json",
+		"./react": "./biome.react.json"
+	},
+	"scripts": {
+		"build": "echo 'no build step (JSON-only package)' && exit 0"
+	},
+	"dependencies": {
+		"@biomejs/biome": "2.3.14"
+	}
+}

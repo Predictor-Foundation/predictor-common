@@ -1,0 +1,38 @@
+{
+	"name": "@ivan-cholakov/squid-common",
+	"version": "1.0.0",
+	"description": "Shared Subsquid building blocks: env parsing, SS58 codec, account upsert/caching, entity cache, processor builder, branded primitives",
+	"license": "UNLICENSED",
+	"private": false,
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"files": [
+		"lib/",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"typecheck": "tsc --noEmit",
+		"clean": "rm -rf lib *.tsbuildinfo"
+	},
+	"dependencies": {
+		"@subsquid/ss58": "1.2.0",
+		"@subsquid/substrate-processor": "^3.3.0",
+		"@subsquid/typeorm-store": "1.2.1",
+		"dotenv": "^16.0.0",
+		"zod": "^4.3.6"
+	},
+	"peerDependencies": {
+		"typeorm": "^0.3.26"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"typescript": "^5.6.0"
+	}
+}

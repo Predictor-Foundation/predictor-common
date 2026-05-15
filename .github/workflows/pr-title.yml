@@ -1,0 +1,38 @@
+name: pr-title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            refactor
+            perf
+            deps
+            docs
+            chore
+          scopes: |
+            tsconfig
+            biome-config
+            git-hooks
+            squid-common
+          requireScope: true
+          # release-please opens PRs titled "chore(main): release X" - exempt them.
+          ignoreLabels: |
+            autorelease: pending
+          subjectPattern: ^[a-z].+[^.]$
+          subjectPatternError: |
+            The subject "{subject}" must start with a lowercase letter and not end with a period.
+            Example: feat(squid-common): add SS58 encoder
