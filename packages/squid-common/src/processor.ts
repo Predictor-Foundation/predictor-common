@@ -117,8 +117,11 @@ export function createSubstrateProcessor<
  * factory-built processor satisfies the same shape upstream code expects.
  */
 export type DefaultProcessor = SubstrateBatchProcessor;
-export type ProcessorItem<P extends SubstrateBatchProcessor> = BatchProcessorItem<P>;
-export type ProcessorCtx<P extends SubstrateBatchProcessor> = DataHandlerContext<
+// `<P extends SubstrateBatchProcessor<any>>` (not just `SubstrateBatchProcessor`)
+// because the factory's default Item is wider than `SubstrateBatchProcessor`'s
+// own default, so the narrower form rejects `typeof processor` in consumers.
+export type ProcessorItem<P extends SubstrateBatchProcessor<any>> = BatchProcessorItem<P>;
+export type ProcessorCtx<P extends SubstrateBatchProcessor<any>> = DataHandlerContext<
 	Store,
 	ProcessorItem<P>
 >;
