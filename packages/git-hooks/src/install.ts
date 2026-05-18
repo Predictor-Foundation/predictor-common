@@ -35,9 +35,7 @@ export function install(): number {
 	// Run husky to set up `.husky/` and wire `core.hooksPath`.
 	const husky = spawnSync("husky", [], { cwd, stdio: "inherit" });
 	if (husky.status !== 0) {
-		process.stderr.write(
-			`ivan-git-hooks: husky failed to initialise (exit ${husky.status})\n`,
-		);
+		process.stderr.write(`ivan-git-hooks: husky failed to initialise (exit ${husky.status})\n`);
 		return husky.status ?? 1;
 	}
 
@@ -53,8 +51,6 @@ export function install(): number {
 		chmodSync(dst, 0o755);
 	}
 
-	process.stdout.write(
-		`ivan-git-hooks: installed ${HOOKS.map((h) => `.husky/${h}`).join(", ")}\n`,
-	);
+	process.stdout.write(`ivan-git-hooks: installed ${HOOKS.map((h) => `.husky/${h}`).join(", ")}\n`);
 	return 0;
 }

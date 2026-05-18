@@ -43,8 +43,6 @@ async function main(): Promise<number> {
 main()
 	.then((code) => process.exit(code))
 	.catch((err) => {
-		process.stderr.write(
-			`ivan-git-hooks: ${err instanceof Error ? err.message : String(err)}\n`,
-		);
+		process.stderr.write(`ivan-git-hooks: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(1);
 	});
