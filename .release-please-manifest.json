@@ -2,5 +2,5 @@
 	"packages/squid-common": "1.1.1",
 	"packages/tsconfig": "0.2.0",
 	"packages/biome-config": "0.2.0",
-	"packages/git-hooks": "0.2.2"
+	"packages/git-hooks": "0.2.3"
 }

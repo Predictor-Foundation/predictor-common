@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/ivan-cholakov/predictor-common/compare/git-hooks-v0.2.2...git-hooks-v0.2.3) (2026-05-18)
+
+
+### Bug Fixes
+
+* **git-hooks:** resolve husky bin via package.json (exports blocks subpath require) ([354b1e1](https://github.com/ivan-cholakov/predictor-common/commit/354b1e18d631309136a7642a3c1b38300c874da4))
+
 ## [0.2.2](https://github.com/ivan-cholakov/predictor-common/compare/git-hooks-v0.2.1...git-hooks-v0.2.2) (2026-05-18)
 
 
