@@ -70,15 +70,23 @@ export type DefaultEventConfig = typeof DEFAULT_EVENT_CONFIG;
  *   });
  */
 /**
- * `SubstrateBatchProcessor`'s `Item` constraint - re-exposed here so the
- * factory's default type parameter satisfies it. The shape is the union of
- * every `EventItem<...>` and `CallItem<...>` Subsquid can emit.
+ * Default Item type used when the caller doesn't narrow.
+ *
+ * We infer it from `SubstrateBatchProcessor`'s own default rather than
+ * hardcoding `{ kind: string; name: string }`. That hardcoded shape was
+ * wider than Subsquid's actual default (`EventItem<"*"> | CallItem<"*">`),
+ * which caused two real problems in consumers:
+ *   - `ProcessorCtx<typeof processor>` was rejected because the wider Item
+ *     didn't satisfy the constraint on `SubstrateBatchProcessor`.
+ *   - Handler code accessing `item.event` / `item.call` didn't type-check
+ *     because the wider Item only had `{ kind, name }`.
+ *
+ * Inferring from Subsquid keeps the contract aligned automatically.
  */
 type ProcessorItemConstraint = { kind: string; name: string };
+type DefaultItem = SubstrateBatchProcessor extends SubstrateBatchProcessor<infer I> ? I : never;
 
-export function createSubstrateProcessor<
-	Item extends ProcessorItemConstraint = ProcessorItemConstraint,
->(opts: {
+export function createSubstrateProcessor<Item extends ProcessorItemConstraint = DefaultItem>(opts: {
 	config: ProcessorConfig;
 	events?: readonly string[];
 	calls?: readonly string[];
