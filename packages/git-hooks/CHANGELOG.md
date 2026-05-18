@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/ivan-cholakov/predictor-common/compare/git-hooks-v0.2.3...git-hooks-v0.2.4) (2026-05-18)
+
+
+### Bug Fixes
+
+* **git-hooks:** walk node_modules to find husky bin (exports field blocks require.resolve) ([b93c2fd](https://github.com/ivan-cholakov/predictor-common/commit/b93c2fdb490ac29a149dc310c16c9a1d1e063366))
+
 ## [0.2.3](https://github.com/ivan-cholakov/predictor-common/compare/git-hooks-v0.2.2...git-hooks-v0.2.3) (2026-05-18)
 
 

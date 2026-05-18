@@ -1,6 +1,6 @@
 {
 	"name": "@ivan-cholakov/git-hooks",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"description": "Opinionated husky-based pre-commit gate for the Predictor Foundation",
 	"license": "UNLICENSED",
 	"private": false,
