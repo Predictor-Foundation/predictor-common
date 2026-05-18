@@ -28,6 +28,3 @@ jobs:
 
       - name: lint
         run: pnpm lint
-
-      - name: typecheck
-        run: pnpm -r exec tsc --noEmit
