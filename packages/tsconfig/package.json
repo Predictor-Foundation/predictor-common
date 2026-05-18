@@ -1,6 +1,6 @@
 {
 	"name": "@ivan-cholakov/tsconfig",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Shared TypeScript config presets for the Predictor Foundation",
 	"license": "UNLICENSED",
 	"private": false,
