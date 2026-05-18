@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/ivan-cholakov/predictor-common/compare/git-hooks-v0.2.1...git-hooks-v0.2.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* **git-hooks:** resolve husky bin via require.resolve ([1d992bf](https://github.com/ivan-cholakov/predictor-common/commit/1d992bf50dc3b1cba42d6499c1bc6c1eb12eca27))
+
 ## [0.2.1](https://github.com/ivan-cholakov/predictor-common/compare/git-hooks-v0.2.0...git-hooks-v0.2.1) (2026-05-18)
 
 

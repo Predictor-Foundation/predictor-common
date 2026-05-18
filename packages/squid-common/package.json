@@ -1,6 +1,6 @@
 {
 	"name": "@ivan-cholakov/squid-common",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Shared Subsquid building blocks: env parsing, SS58 codec, account upsert/caching, entity cache, processor builder, branded primitives",
 	"license": "UNLICENSED",
 	"private": false,
