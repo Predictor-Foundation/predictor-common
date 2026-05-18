@@ -1,6 +1,19 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+
+function resolveHuskyBin(): string {
+	// husky@9 declares `"exports": "./index.js"`, which blocks
+	// `require.resolve("husky/bin.js")`. package.json is always
+	// resolvable though, so we read the `bin` field and join manually.
+	const pkgPath = require.resolve("husky/package.json");
+	const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+		bin?: string | Record<string, string>;
+	};
+	const binRel = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.husky;
+	if (!binRel) throw new Error("husky package.json missing `bin` field");
+	return join(dirname(pkgPath), binRel);
+}
 
 const HOOKS = ["pre-commit", "commit-msg"] as const;
 
@@ -33,10 +46,10 @@ export function install(): number {
 	}
 
 	// Run husky to set up `.husky/` and wire `core.hooksPath`.
-	// We `require.resolve` the husky bin rather than relying on PATH because pnpm's
+	// We resolve the husky bin via package.json rather than PATH, because pnpm's
 	// strict node_modules layout doesn't link transitive bins into the consumer's
 	// `node_modules/.bin/` - `spawnSync("husky", ...)` would ENOENT under pnpm.
-	const huskyBin = require.resolve("husky/bin.js");
+	const huskyBin = resolveHuskyBin();
 	const husky = spawnSync(process.execPath, [huskyBin], { cwd, stdio: "inherit" });
 	if (husky.status !== 0) {
 		process.stderr.write(`ivan-git-hooks: husky failed to initialise (exit ${husky.status})\n`);
