@@ -1,21 +1,39 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-function resolveHuskyBin(): string {
-	// husky@9 declares `"exports": "./index.js"`, which blocks
-	// `require.resolve("husky/bin.js")`. package.json is always
-	// resolvable though, so we read the `bin` field and join manually.
-	const pkgPath = require.resolve("husky/package.json");
-	const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
-		bin?: string | Record<string, string>;
-	};
-	const binRel = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.husky;
-	if (!binRel) throw new Error("husky package.json missing `bin` field");
-	return join(dirname(pkgPath), binRel);
-}
-
 const HOOKS = ["pre-commit", "commit-msg"] as const;
+
+/**
+ * Locate husky's bin.js by walking the directory ancestors of this
+ * file. We can't use `require.resolve("husky/bin.js")` or
+ * `require.resolve("husky/package.json")` because husky 9 declares
+ * `"exports": "./index.js"`, which blocks any other subpath.
+ *
+ * The bin always sits at husky's package root on disk. At each ancestor
+ * we check two locations:
+ *   1. `<dir>/node_modules/husky/bin.js`  — standard Node resolution
+ *      (npm flat layout, also pnpm `node_modules/.bin` walks).
+ *   2. `<dir>/husky/bin.js`               — pnpm's strict layout, where
+ *      husky is a sibling of the importing package inside
+ *      `.pnpm/<pkg>+<ver>/node_modules/husky/`. Our own package's
+ *      `husky/` template dir doesn't contain `bin.js`, so no false hit.
+ */
+function resolveHuskyBin(): string {
+	let dir = __dirname;
+	while (true) {
+		for (const candidate of [
+			join(dir, "node_modules", "husky", "bin.js"),
+			join(dir, "husky", "bin.js"),
+		]) {
+			if (existsSync(candidate)) return candidate;
+		}
+		const parent = dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+	throw new Error("husky bin not found in any ancestor directory");
+}
 
 /**
  * Set up husky + drop the opinionated hooks into the current repo's
@@ -46,9 +64,6 @@ export function install(): number {
 	}
 
 	// Run husky to set up `.husky/` and wire `core.hooksPath`.
-	// We resolve the husky bin via package.json rather than PATH, because pnpm's
-	// strict node_modules layout doesn't link transitive bins into the consumer's
-	// `node_modules/.bin/` - `spawnSync("husky", ...)` would ENOENT under pnpm.
 	const huskyBin = resolveHuskyBin();
 	const husky = spawnSync(process.execPath, [huskyBin], { cwd, stdio: "inherit" });
 	if (husky.status !== 0) {
