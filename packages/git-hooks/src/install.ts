@@ -33,7 +33,11 @@ export function install(): number {
 	}
 
 	// Run husky to set up `.husky/` and wire `core.hooksPath`.
-	const husky = spawnSync("husky", [], { cwd, stdio: "inherit" });
+	// We `require.resolve` the husky bin rather than relying on PATH because pnpm's
+	// strict node_modules layout doesn't link transitive bins into the consumer's
+	// `node_modules/.bin/` - `spawnSync("husky", ...)` would ENOENT under pnpm.
+	const huskyBin = require.resolve("husky/bin.js");
+	const husky = spawnSync(process.execPath, [huskyBin], { cwd, stdio: "inherit" });
 	if (husky.status !== 0) {
 		process.stderr.write(`ivan-git-hooks: husky failed to initialise (exit ${husky.status})\n`);
 		return husky.status ?? 1;
