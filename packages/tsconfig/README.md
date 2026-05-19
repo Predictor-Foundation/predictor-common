@@ -1,4 +1,4 @@
-# @ivan-cholakov/tsconfig
+# @predictor-foundation/tsconfig
 
 Shared TypeScript config presets.
 
@@ -15,7 +15,7 @@ Shared TypeScript config presets.
 
 ```json
 // tsconfig.json
-{ "extends": "@ivan-cholakov/tsconfig/subsquid" }
+{ "extends": "@predictor-foundation/tsconfig/subsquid" }
 ```
 
 Or `node`, `base`, `react` as appropriate.

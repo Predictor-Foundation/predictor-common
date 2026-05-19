@@ -11,7 +11,7 @@ async function main(): Promise<number> {
 		case "run": {
 			const [step, ...args] = rest;
 			if (!step) {
-				process.stderr.write("usage: ivan-git-hooks run <pre-commit|commit-msg> [args]\n");
+				process.stderr.write("usage: predictor-git-hooks run <pre-commit|commit-msg> [args]\n");
 				return 2;
 			}
 			return run(step, args);
@@ -21,11 +21,11 @@ async function main(): Promise<number> {
 		case undefined:
 			process.stdout.write(
 				[
-					"ivan-git-hooks - opinionated git hooks for the Predictor Foundation",
+					"predictor-git-hooks - opinionated git hooks for the Predictor Foundation",
 					"",
 					"usage:",
-					"  ivan-git-hooks install            # set up .husky/* hooks in the current repo",
-					"  ivan-git-hooks run <step> [args]  # run a hook step",
+					"  predictor-git-hooks install            # set up .husky/* hooks in the current repo",
+					"  predictor-git-hooks run <step> [args]  # run a hook step",
 					"",
 					"steps:",
 					"  pre-commit              runs format -> lint -> typecheck -> audit, fast-failing on any failure",
@@ -43,6 +43,8 @@ async function main(): Promise<number> {
 main()
 	.then((code) => process.exit(code))
 	.catch((err) => {
-		process.stderr.write(`ivan-git-hooks: ${err instanceof Error ? err.message : String(err)}\n`);
+		process.stderr.write(
+			`predictor-git-hooks: ${err instanceof Error ? err.message : String(err)}\n`,
+		);
 		process.exit(1);
 	});

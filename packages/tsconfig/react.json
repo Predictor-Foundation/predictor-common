@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"display": "@ivan-cholakov/tsconfig/react",
+	"display": "@predictor-foundation/tsconfig/react",
 	"extends": "./base.json",
 	"compilerOptions": {
 		"lib": ["DOM", "DOM.Iterable", "ES2022"],

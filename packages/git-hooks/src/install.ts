@@ -44,7 +44,7 @@ function resolveHuskyBin(): string {
  * `pnpm install` (which re-runs the `prepare` script).
  *
  * Each hook script is a one-liner that delegates to
- * `ivan-git-hooks run <step>`. That indirection means the actual
+ * `predictor-git-hooks run <step>`. That indirection means the actual
  * hook *steps* can change across versions of this package without ever
  * editing the consumer's `.husky/` files.
  */
@@ -55,11 +55,11 @@ export function install(): number {
 	// anyway. Also skip if we're not inside a git repo (e.g. a freshly
 	// extracted tarball during `npm publish`).
 	if (process.env.CI === "true") {
-		process.stdout.write("ivan-git-hooks: CI detected, skipping install\n");
+		process.stdout.write("predictor-git-hooks: CI detected, skipping install\n");
 		return 0;
 	}
 	if (!existsSync(join(cwd, ".git"))) {
-		process.stdout.write("ivan-git-hooks: not a git repo, skipping install\n");
+		process.stdout.write("predictor-git-hooks: not a git repo, skipping install\n");
 		return 0;
 	}
 
@@ -67,7 +67,9 @@ export function install(): number {
 	const huskyBin = resolveHuskyBin();
 	const husky = spawnSync(process.execPath, [huskyBin], { cwd, stdio: "inherit" });
 	if (husky.status !== 0) {
-		process.stderr.write(`ivan-git-hooks: husky failed to initialise (exit ${husky.status})\n`);
+		process.stderr.write(
+			`predictor-git-hooks: husky failed to initialise (exit ${husky.status})\n`,
+		);
 		return husky.status ?? 1;
 	}
 
@@ -83,6 +85,8 @@ export function install(): number {
 		chmodSync(dst, 0o755);
 	}
 
-	process.stdout.write(`ivan-git-hooks: installed ${HOOKS.map((h) => `.husky/${h}`).join(", ")}\n`);
+	process.stdout.write(
+		`predictor-git-hooks: installed ${HOOKS.map((h) => `.husky/${h}`).join(", ")}\n`,
+	);
 	return 0;
 }

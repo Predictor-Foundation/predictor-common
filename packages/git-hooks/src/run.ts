@@ -5,7 +5,7 @@ type Step = "pre-commit" | "commit-msg";
 
 /**
  * Dispatch a hook step. Consumer's `.husky/<hook>` calls
- * `ivan-git-hooks run <step> [args]`; the steps that run *inside*
+ * `predictor-git-hooks run <step> [args]`; the steps that run *inside*
  * that dispatch are owned here. Changing the steps is a release of
  * this package, not a per-repo `.husky/` edit.
  *
@@ -26,7 +26,7 @@ export function run(step: string, args: string[]): number {
 		case "commit-msg":
 			return runCommitMsg(args[0]);
 		default:
-			process.stderr.write(`ivan-git-hooks: unknown step "${step}"\n`);
+			process.stderr.write(`predictor-git-hooks: unknown step "${step}"\n`);
 			return 2;
 	}
 }
@@ -40,10 +40,10 @@ function runPreCommit(): number {
 	];
 
 	for (const { name, cmd, args } of steps) {
-		process.stdout.write(`\n[ivan-git-hooks] ${name}\n`);
+		process.stdout.write(`\n[predictor-git-hooks] ${name}\n`);
 		const result = spawnSync(cmd, args, { stdio: "inherit" });
 		if (result.status !== 0) {
-			process.stderr.write(`\n[ivan-git-hooks] ${name} failed - commit aborted\n`);
+			process.stderr.write(`\n[predictor-git-hooks] ${name} failed - commit aborted\n`);
 			return result.status ?? 1;
 		}
 		// After the format step, re-stage files Biome may have rewritten
@@ -52,7 +52,7 @@ function runPreCommit(): number {
 		if (name === "format") {
 			const restage = spawnSync("git", ["update-index", "--again"], { stdio: "inherit" });
 			if (restage.status !== 0) {
-				process.stderr.write("[ivan-git-hooks] re-stage after format failed\n");
+				process.stderr.write("[predictor-git-hooks] re-stage after format failed\n");
 				return restage.status ?? 1;
 			}
 		}
@@ -93,7 +93,7 @@ const PASSTHROUGH_PREFIXES = ["Merge ", "Revert ", "fixup!", "squash!", "amend!"
 
 function runCommitMsg(msgFile: string | undefined): number {
 	if (!msgFile) {
-		process.stderr.write("ivan-git-hooks: commit-msg step requires a message file path\n");
+		process.stderr.write("predictor-git-hooks: commit-msg step requires a message file path\n");
 		return 2;
 	}
 
@@ -102,7 +102,7 @@ function runCommitMsg(msgFile: string | undefined): number {
 		raw = readFileSync(msgFile, "utf8");
 	} catch (err) {
 		process.stderr.write(
-			`ivan-git-hooks: cannot read commit message file "${msgFile}": ${
+			`predictor-git-hooks: cannot read commit message file "${msgFile}": ${
 				err instanceof Error ? err.message : String(err)
 			}\n`,
 		);
@@ -113,7 +113,7 @@ function runCommitMsg(msgFile: string | undefined): number {
 	const subject = raw.split("\n").find((line) => line.trim().length > 0 && !line.startsWith("#"));
 
 	if (!subject) {
-		process.stderr.write("[ivan-git-hooks] commit-msg: empty message - commit aborted\n");
+		process.stderr.write("[predictor-git-hooks] commit-msg: empty message - commit aborted\n");
 		return 1;
 	}
 
@@ -125,7 +125,7 @@ function runCommitMsg(msgFile: string | undefined): number {
 		process.stderr.write(
 			[
 				"",
-				"[ivan-git-hooks] commit-msg: subject does not match Conventional Commits",
+				"[predictor-git-hooks] commit-msg: subject does not match Conventional Commits",
 				`  got:      ${subject}`,
 				`  expected: <type>[(scope)][!]: <subject>`,
 				`  types:    ${CONVENTIONAL_TYPES.join(", ")}`,

@@ -8,25 +8,25 @@ bundle in three lines and inherit the family's conventions for free.
 
 | Package | Audience | Purpose |
 |---|---|---|
-| [`@ivan-cholakov/tsconfig`](packages/tsconfig) | any TS repo | Shared `tsconfig` presets (`base`, `node`, `subsquid`, `react`) |
-| [`@ivan-cholakov/biome-config`](packages/biome-config) | any TS repo | Shared Biome lint + format config with Biome version pinned |
-| [`@ivan-cholakov/git-hooks`](packages/git-hooks) | any repo | Husky-based pre-commit gate: format → lint → typecheck → audit |
-| [`@ivan-cholakov/squid-common`](packages/squid-common) | Subsquid squids | Env parsing, SS58 codec, account upsert, entity cache, processor builder, branded primitives |
+| [`@predictor-foundation/tsconfig`](packages/tsconfig) | any TS repo | Shared `tsconfig` presets (`base`, `node`, `subsquid`, `react`) |
+| [`@predictor-foundation/biome-config`](packages/biome-config) | any TS repo | Shared Biome lint + format config with Biome version pinned |
+| [`@predictor-foundation/git-hooks`](packages/git-hooks) | any repo | Husky-based pre-commit gate: format → lint → typecheck → audit |
+| [`@predictor-foundation/squid-common`](packages/squid-common) | Subsquid squids | Env parsing, SS58 codec, account upsert, entity cache, processor builder, branded primitives |
 
 ## Quick start (consumer repo)
 
 ```bash
 # 1. Add .npmrc at repo root (copy from .npmrc.example here)
 cat > .npmrc <<'EOF'
-@ivan-cholakov:registry=https://npm.pkg.github.com
+@predictor-foundation:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 EOF
 
 # 2. Install the dev bundle
 pnpm add -D \
-  @ivan-cholakov/tsconfig \
-  @ivan-cholakov/biome-config \
-  @ivan-cholakov/git-hooks \
+  @predictor-foundation/tsconfig \
+  @predictor-foundation/biome-config \
+  @predictor-foundation/git-hooks \
   typescript
 ```
 
@@ -37,24 +37,24 @@ Then drop in three small config files:
 {
   "scripts": {
     "lint": "biome check .",
-    "prepare": "ivan-git-hooks install"
+    "prepare": "predictor-git-hooks install"
   }
 }
 ```
 
 ```json
 // tsconfig.json
-{ "extends": "@ivan-cholakov/tsconfig/node" }
+{ "extends": "@predictor-foundation/tsconfig/node" }
 ```
 
 ```json
 // biome.json
-{ "extends": ["@ivan-cholakov/biome-config/base"] }
+{ "extends": ["@predictor-foundation/biome-config/base"] }
 ```
 
-Subsquid repos extend `@ivan-cholakov/tsconfig/subsquid` and
-`@ivan-cholakov/biome-config/subsquid` instead, and add
-`@ivan-cholakov/squid-common` as a runtime dep.
+Subsquid repos extend `@predictor-foundation/tsconfig/subsquid` and
+`@predictor-foundation/biome-config/subsquid` instead, and add
+`@predictor-foundation/squid-common` as a runtime dep.
 
 ## Repo conventions
 
@@ -63,8 +63,8 @@ Subsquid repos extend `@ivan-cholakov/tsconfig/subsquid` and
 - **Releases:** [release-please](https://github.com/googleapis/release-please)
   in manifest mode. Each PR's conventional-commit scope drives which
   package(s) bump on the next release.
-- **Lint/format:** Biome, dogfood-extending `@ivan-cholakov/biome-config/base`.
-- **TypeScript:** dogfood-extending `@ivan-cholakov/tsconfig/base`.
+- **Lint/format:** Biome, dogfood-extending `@predictor-foundation/biome-config/base`.
+- **TypeScript:** dogfood-extending `@predictor-foundation/tsconfig/base`.
 
 ## Development
 

@@ -1,5 +1,5 @@
 {
-	"name": "@ivan-cholakov/git-hooks",
+	"name": "@predictor-foundation/git-hooks",
 	"version": "0.2.4",
 	"description": "Opinionated husky-based pre-commit gate for the Predictor Foundation",
 	"license": "UNLICENSED",
@@ -9,7 +9,7 @@
 	},
 	"main": "lib/cli.js",
 	"bin": {
-		"ivan-git-hooks": "lib/cli.js"
+		"predictor-git-hooks": "lib/cli.js"
 	},
 	"files": [
 		"lib/",

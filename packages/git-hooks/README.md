@@ -1,4 +1,4 @@
-# @ivan-cholakov/git-hooks
+# @predictor-foundation/git-hooks
 
 Opinionated husky-based git hooks. Two hooks, fixed behaviour, fast-fail
 on any failure:
@@ -39,13 +39,13 @@ the new steps on the next `pnpm install`.
 ## Setup
 
 ```bash
-pnpm add -D @ivan-cholakov/git-hooks
+pnpm add -D @predictor-foundation/git-hooks
 ```
 
 ```json
 // package.json
 {
-  "scripts": { "prepare": "ivan-git-hooks install" }
+  "scripts": { "prepare": "predictor-git-hooks install" }
 }
 ```
 
@@ -55,7 +55,7 @@ Running `pnpm install` runs `prepare`, which:
 2. Drops `.husky/pre-commit` and `.husky/commit-msg` into the repo.
 
 Each dropped hook is a one-liner that delegates to
-`ivan-git-hooks run <step>`. Bumping this package's version changes
+`predictor-git-hooks run <step>`. Bumping this package's version changes
 the actual steps without touching consumer `.husky/` files.
 
 ## Behaviour notes

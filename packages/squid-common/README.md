@@ -1,4 +1,4 @@
-# @ivan-cholakov/squid-common
+# @predictor-foundation/squid-common
 
 Shared building blocks for Subsquid Substrate processors in the
 Predictor Foundation family.
@@ -45,7 +45,7 @@ import {
   createDefaultSs58Codec,
   createAccountHelpers,
   createSubstrateProcessor,
-} from "@ivan-cholakov/squid-common";
+} from "@predictor-foundation/squid-common";
 
 const { config } = parseProcessorEnv();
 const ss58 = createDefaultSs58Codec();

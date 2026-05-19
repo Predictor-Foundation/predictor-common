@@ -6,22 +6,22 @@
 	"packages": {
 		"packages/squid-common": {
 			"release-type": "node",
-			"package-name": "@ivan-cholakov/squid-common",
+			"package-name": "@predictor-foundation/squid-common",
 			"component": "squid-common"
 		},
 		"packages/tsconfig": {
 			"release-type": "node",
-			"package-name": "@ivan-cholakov/tsconfig",
+			"package-name": "@predictor-foundation/tsconfig",
 			"component": "tsconfig"
 		},
 		"packages/biome-config": {
 			"release-type": "node",
-			"package-name": "@ivan-cholakov/biome-config",
+			"package-name": "@predictor-foundation/biome-config",
 			"component": "biome-config"
 		},
 		"packages/git-hooks": {
 			"release-type": "node",
-			"package-name": "@ivan-cholakov/git-hooks",
+			"package-name": "@predictor-foundation/git-hooks",
 			"component": "git-hooks"
 		}
 	},

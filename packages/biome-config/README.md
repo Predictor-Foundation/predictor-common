@@ -1,4 +1,4 @@
-# @ivan-cholakov/biome-config
+# @predictor-foundation/biome-config
 
 Shared Biome lint + format presets.
 
@@ -14,7 +14,7 @@ Shared Biome lint + format presets.
 
 ```json
 // biome.json
-{ "extends": ["@ivan-cholakov/biome-config/subsquid"] }
+{ "extends": ["@predictor-foundation/biome-config/subsquid"] }
 ```
 
 The package pins `@biomejs/biome@2.3.14` as a regular dependency, so
