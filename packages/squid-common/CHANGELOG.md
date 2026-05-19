@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/Predictor-Foundation/predictor-common/compare/squid-common-v1.3.0...squid-common-v1.3.1) (2026-05-19)
+
+
+### Bug Fixes
+
+* link packages to predictor-common repo via package.json repository field ([cf6ccae](https://github.com/Predictor-Foundation/predictor-common/commit/cf6ccae7eee4b07321840f118db5ab12f7a2678f))
+
 ## [1.3.0](https://github.com/Predictor-Foundation/predictor-common/compare/squid-common-v1.2.0...squid-common-v1.3.0) (2026-05-19)
 
 
