@@ -7,6 +7,11 @@
 	"publishConfig": {
 		"registry": "https://npm.pkg.github.com"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/squid-common"
+	},
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"files": [
