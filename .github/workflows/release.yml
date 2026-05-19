@@ -50,7 +50,11 @@ jobs:
 
       - name: publish released packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Same PAT story as release-please: the auto-provided GITHUB_TOKEN
+          # doesn't have write access to packages first published outside the
+          # workflow, so we reuse RELEASE_PLEASE_TOKEN (which carries the
+          # write:packages scope) for publishing too.
+          NODE_AUTH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
         run: |
           # paths_released is a JSON array of package directories
