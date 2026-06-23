@@ -5,5 +5,5 @@
 // This package depends on @playwright/test for TYPES ONLY (erased at build), so
 // importing it never loads a second Playwright runtime - which would trip
 // Playwright's "two different versions" guard in linked/monorepo setups.
-export { definePlaywrightConfig, type E2EConfigOptions } from "./config";
-export { type ServerSpec, server } from "./servers";
+export { definePlaywrightConfig, type E2EConfigOptions } from "./config.js";
+export { type ServerSpec, server } from "./servers.js";
