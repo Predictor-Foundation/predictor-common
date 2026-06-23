@@ -11,7 +11,7 @@ export function formatNumber(value: number | Decimal, options: FormatNumberOptio
 	const decimal = value instanceof Decimal ? value : new Decimal(value);
 
 	return Intl.NumberFormat("en-US", {
-		maximumFractionDigits: options.compact ? 3 : options.decimalPlaces || 20,
+		maximumFractionDigits: options.compact ? 3 : (options.decimalPlaces ?? 20),
 		notation: options.compact ? "compact" : undefined,
 	}).format(decimal.toString() as unknown as number);
 }
@@ -30,7 +30,7 @@ export function formatCurrency(
 ) {
 	const decimal = value instanceof Decimal ? value : new Decimal(value);
 
-	let decimalPlaces = options.decimalPlaces || 20;
+	let decimalPlaces = options.decimalPlaces ?? 20;
 
 	if (decimalPlaces === "optimal") {
 		decimalPlaces = options.usdRate

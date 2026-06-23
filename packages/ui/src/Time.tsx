@@ -45,7 +45,7 @@ export const Time = (props: TimeProps) => {
 
 	useEffect(() => {
 		if (fromNow) {
-			const interval = setInterval(() => setFromNowFormatted(formatFromNow(time)));
+			const interval = setInterval(() => setFromNowFormatted(formatFromNow(time)), 1000);
 			return () => clearInterval(interval);
 		}
 	}, [time, fromNow, formatFromNow]);
