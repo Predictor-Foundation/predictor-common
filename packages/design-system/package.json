@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/design-system",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Shared PRDCTR Material-UI theme + design tokens for the Predictor Foundation frontends",
 	"license": "UNLICENSED",
 	"private": false,
