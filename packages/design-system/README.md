@@ -40,8 +40,11 @@ themed `css` callbacks are type-safe with zero extra setup.
 
 ## Consumers
 
+- **block-explorer** (`@prd/frontend`) - the theme originated here and now consumes the
+  package: `src/theme.tsx` re-exports `theme` and `src/index.tsx` imports `styles.css`.
+  Its table / chip / toggle-button / tooltip overrides have been folded into this theme,
+  so the package is a lossless drop-in.
 - **faucet** (`@prd/faucet-frontend`) - consumes this package directly.
-- **block-explorer** - the theme originated here; it can adopt the package by replacing
-  its local `src/theme.tsx` with a re-export. Its extra component overrides
-  (tables, chips, toggle buttons, tooltips) should be merged into this theme as part of
-  that migration so it stays the single source of truth.
+
+This package is the single source of truth for the PRDCTR look; both frontends render
+from the same theme + tokens.
