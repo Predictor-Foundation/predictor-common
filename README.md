@@ -12,6 +12,9 @@ bundle in three lines and inherit the family's conventions for free.
 | [`@predictor-foundation/biome-config`](packages/biome-config) | any TS repo | Shared Biome lint + format config with Biome version pinned |
 | [`@predictor-foundation/git-hooks`](packages/git-hooks) | any repo | Husky-based pre-commit gate: format → lint → typecheck → audit |
 | [`@predictor-foundation/squid-common`](packages/squid-common) | Subsquid squids | Env parsing, SS58 codec, account upsert, entity cache, processor builder, branded primitives |
+| [`@predictor-foundation/design-system`](packages/design-system) | Frontends | Shared PRDCTR Material-UI theme + design tokens (colours, fonts) |
+| [`@predictor-foundation/ui`](packages/ui) | Frontends | App-agnostic React components (icons, cards, links, currency/time), with per-component subpath imports |
+| [`@predictor-foundation/e2e`](packages/e2e) | Playwright repos | Zero-setup Playwright harness: config factory + server orchestration |
 
 ## Quick start (consumer repo)
 
