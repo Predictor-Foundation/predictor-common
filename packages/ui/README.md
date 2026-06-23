@@ -39,6 +39,24 @@ import { Card, CopyToClipboardButton, Link } from "@predictor-foundation/ui";
 `Link`/`ButtonLink` require a `react-router-dom` Router in the tree. The icon font for
 `MaterialSymbol` ships with `@predictor-foundation/design-system/styles.css`.
 
+## Subpath imports
+
+Each component is also exposed on its own subpath, so a consumer can pull in exactly
+what it needs without the barrel pulling in unrelated components:
+
+```tsx
+import { MaterialSymbol } from "@predictor-foundation/ui/MaterialSymbol";
+import { CopyToClipboardButton } from "@predictor-foundation/ui/CopyToClipboardButton";
+```
+
+This matters for router-less apps (e.g. the faucet): importing a leaf subpath never
+reaches `Link`/`ButtonLink`, so `react-router-dom` is not needed even at build time.
+The barrel (`from "@predictor-foundation/ui"`) tree-shakes the same way for bundlers
+that support it; the subpaths make the guarantee explicit and bundler-independent.
+
+Available subpaths: `./ButtonLink`, `./Card`, `./CopyToClipboardButton`, `./Currency`,
+`./Link`, `./Loading`, `./MaterialSymbol`, `./Spinner`, `./Time`, `./number`.
+
 ## Scope
 
 This is the first, cleanest tier extracted from block-explorer. Higher-tier candidates

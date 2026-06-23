@@ -19,7 +19,48 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"default": "./lib/index.js"
-		}
+		},
+		"./ButtonLink": {
+			"types": "./lib/ButtonLink.d.ts",
+			"default": "./lib/ButtonLink.js"
+		},
+		"./Card": {
+			"types": "./lib/Card.d.ts",
+			"default": "./lib/Card.js"
+		},
+		"./CopyToClipboardButton": {
+			"types": "./lib/CopyToClipboardButton.d.ts",
+			"default": "./lib/CopyToClipboardButton.js"
+		},
+		"./Currency": {
+			"types": "./lib/Currency.d.ts",
+			"default": "./lib/Currency.js"
+		},
+		"./Link": {
+			"types": "./lib/Link.d.ts",
+			"default": "./lib/Link.js"
+		},
+		"./Loading": {
+			"types": "./lib/Loading.d.ts",
+			"default": "./lib/Loading.js"
+		},
+		"./MaterialSymbol": {
+			"types": "./lib/MaterialSymbol.d.ts",
+			"default": "./lib/MaterialSymbol.js"
+		},
+		"./Spinner": {
+			"types": "./lib/Spinner.d.ts",
+			"default": "./lib/Spinner.js"
+		},
+		"./Time": {
+			"types": "./lib/Time.d.ts",
+			"default": "./lib/Time.js"
+		},
+		"./number": {
+			"types": "./lib/number.d.ts",
+			"default": "./lib/number.js"
+		},
+		"./package.json": "./package.json"
 	},
 	"files": [
 		"lib/",
