@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/Predictor-Foundation/predictor-common/compare/e2e-v0.1.1...e2e-v0.1.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **e2e:** add .js extensions to relative re-exports for Node ESM ([#9](https://github.com/Predictor-Foundation/predictor-common/issues/9)) ([e66de1d](https://github.com/Predictor-Foundation/predictor-common/commit/e66de1d7d0a810bbe5c84285150e9cbeb62b5fcd))
+
 ## [0.1.1](https://github.com/Predictor-Foundation/predictor-common/compare/e2e-v0.1.0...e2e-v0.1.1) (2026-06-23)
 
 
