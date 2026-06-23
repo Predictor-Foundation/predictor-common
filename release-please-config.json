@@ -11,6 +11,11 @@
 			"package-name": "@predictor-foundation/design-system",
 			"component": "design-system"
 		},
+		"packages/e2e": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/e2e",
+			"component": "e2e"
+		},
 		"packages/squid-common": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/squid-common",

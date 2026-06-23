@@ -29,6 +29,7 @@ jobs:
             git-hooks
             squid-common
             design-system
+            e2e
           requireScope: true
           # release-please opens PRs titled "chore(main): release X" - exempt them.
           ignoreLabels: |
