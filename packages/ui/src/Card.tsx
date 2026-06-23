@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
-import { css, type Theme } from "@emotion/react";
+import { css } from "@emotion/react";
+import { type Theme, useTheme } from "@mui/material/styles";
 import type { HTMLAttributes } from "react";
 
 const cardStyle = (theme: Theme) => css`
@@ -57,14 +58,19 @@ const cardRowStyle = (theme: Theme) => css`
 	}
 `;
 
-export const Card = (props: HTMLAttributes<HTMLDivElement>) => (
-	<div css={cardStyle} data-class="card" {...props} />
-);
+export const Card = (props: HTMLAttributes<HTMLDivElement>) => {
+	// Read the theme from MUI's context (reliably shared across package
+	// boundaries) rather than emotion's css-callback theme, which is empty when
+	// this package is consumed as an externalised/prebundled dependency.
+	const theme = useTheme();
+	return <div css={cardStyle(theme)} data-class="card" {...props} />;
+};
 
 export const CardHeader = (props: HTMLAttributes<HTMLDivElement>) => (
 	<div css={cardHeaderStyle} data-class="card-header" {...props} />
 );
 
-export const CardRow = (props: HTMLAttributes<HTMLDivElement>) => (
-	<div css={cardRowStyle} data-class="card-row" {...props} />
-);
+export const CardRow = (props: HTMLAttributes<HTMLDivElement>) => {
+	const theme = useTheme();
+	return <div css={cardRowStyle(theme)} data-class="card-row" {...props} />;
+};
