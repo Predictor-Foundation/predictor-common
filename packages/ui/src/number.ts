@@ -60,5 +60,5 @@ export function formatCurrency(
  */
 export function getOptimalDecimalPlaces(usdRate: Decimal, minimalUsdValue = new Decimal("0.01")) {
 	const cryptoValueOfMinimalUsdValue = minimalUsdValue.div(usdRate);
-	return cryptoValueOfMinimalUsdValue.log().neg().ceil().toNumber();
+	return Math.max(0, cryptoValueOfMinimalUsdValue.log().neg().ceil().toNumber());
 }
