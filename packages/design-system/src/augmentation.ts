@@ -1,7 +1,7 @@
 // Module augmentations for the Predictor design system. Importing this package
 // applies them: the custom `neutral` palette colour and the Emotion `css` theme
 // callbacks become type-safe in consumers.
-import "@emotion/react";
+import type {} from "@emotion/react";
 import type { Theme as MuiTheme } from "@mui/material";
 
 declare module "@emotion/react" {
