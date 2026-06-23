@@ -1,0 +1,104 @@
+{
+	"name": "@predictor-foundation/ui",
+	"version": "0.1.0",
+	"description": "Shared, app-agnostic React UI components for Predictor Foundation frontends (lifted from block-explorer)",
+	"license": "UNLICENSED",
+	"private": false,
+	"type": "module",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/ui"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
+		},
+		"./ButtonLink": {
+			"types": "./lib/ButtonLink.d.ts",
+			"default": "./lib/ButtonLink.js"
+		},
+		"./Card": {
+			"types": "./lib/Card.d.ts",
+			"default": "./lib/Card.js"
+		},
+		"./CopyToClipboardButton": {
+			"types": "./lib/CopyToClipboardButton.d.ts",
+			"default": "./lib/CopyToClipboardButton.js"
+		},
+		"./Currency": {
+			"types": "./lib/Currency.d.ts",
+			"default": "./lib/Currency.js"
+		},
+		"./Link": {
+			"types": "./lib/Link.d.ts",
+			"default": "./lib/Link.js"
+		},
+		"./Loading": {
+			"types": "./lib/Loading.d.ts",
+			"default": "./lib/Loading.js"
+		},
+		"./MaterialSymbol": {
+			"types": "./lib/MaterialSymbol.d.ts",
+			"default": "./lib/MaterialSymbol.js"
+		},
+		"./Spinner": {
+			"types": "./lib/Spinner.d.ts",
+			"default": "./lib/Spinner.js"
+		},
+		"./Time": {
+			"types": "./lib/Time.d.ts",
+			"default": "./lib/Time.js"
+		},
+		"./number": {
+			"types": "./lib/number.d.ts",
+			"default": "./lib/number.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"lib/",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"types:check": "tsc --noEmit",
+		"clean": "rm -rf lib *.tsbuildinfo"
+	},
+	"dependencies": {
+		"date-fns": "^2.29.3",
+		"date-fns-tz": "^2.0.0",
+		"decimal.js": "^10.4.3"
+	},
+	"peerDependencies": {
+		"@emotion/react": "^11.10.0",
+		"@emotion/styled": "^11.10.0",
+		"@mui/material": "^5.11.0",
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0",
+		"react-router-dom": "^6.0.0"
+	},
+	"peerDependenciesMeta": {
+		"react-router-dom": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@emotion/react": "^11.10.6",
+		"@emotion/styled": "^11.10.6",
+		"@mui/material": "^5.11.14",
+		"@types/react": "^18.2.0",
+		"react": "^18.2.0",
+		"react-router-dom": "^6.30.4",
+		"typescript": "^5.6.0"
+	}
+}

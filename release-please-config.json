@@ -6,6 +6,21 @@
 	"bump-minor-pre-major": true,
 	"bump-patch-for-minor-pre-major": true,
 	"packages": {
+		"packages/design-system": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/design-system",
+			"component": "design-system"
+		},
+		"packages/e2e": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/e2e",
+			"component": "e2e"
+		},
+		"packages/ui": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/ui",
+			"component": "ui"
+		},
 		"packages/squid-common": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/squid-common",
