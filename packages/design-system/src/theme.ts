@@ -163,6 +163,46 @@ export const theme = createTheme({
 				`,
 			},
 		},
+		MuiToggleButton: {
+			styleOverrides: {
+				root: ({ ownerState }) => {
+					const color =
+						!ownerState.color || ownerState.color === "standard" ? "neutral" : ownerState.color;
+
+					return css`
+						padding: 6px 16px;
+						color: ${theme.palette.neutral.dark};
+						background-color: ${alpha(theme.palette.neutral.main, 0.075)};
+						border: none;
+
+						&:hover {
+							background-color: ${alpha(theme.palette.neutral.main, 0.15)};
+						}
+
+						&.Mui-selected {
+							${
+								ownerState.size === "small" &&
+								css`
+									color: ${darken(theme.palette[color].dark, 0.25)};
+								`
+							}
+
+							background-color: ${alpha(theme.palette[color].main, 0.25)};
+
+							&:hover {
+								background-color: ${alpha(theme.palette[color].main, 0.3)};
+							}
+						}
+					`;
+				},
+				sizeSmall: css`
+					padding: 2px 10px;
+					font-size: 13px;
+					font-weight: 500;
+					line-height: 16px;
+				`,
+			},
+		},
 		MuiIconButton: {
 			styleOverrides: {
 				root: css`
@@ -222,6 +262,88 @@ export const theme = createTheme({
 				`,
 				notchedOutline: css`
 					border-color: ${predictor.border};
+				`,
+			},
+		},
+		MuiTableRow: {
+			styleOverrides: {
+				root: css`
+					&:hover {
+						background-color: ${alpha("#ffffff", 0.04)};
+					}
+
+					&:last-child > .MuiTableCell-body {
+						border-bottom: none;
+					}
+				`,
+			},
+		},
+		MuiTableCell: {
+			styleOverrides: {
+				root: css`
+					font-size: 15px;
+					line-height: 20px;
+					border-bottom-color: ${predictor.border};
+					color: ${predictor.foreground};
+				`,
+				head: css`
+					font-size: 13px;
+					font-weight: 500;
+					line-height: 16px;
+					background-color: ${predictor.muted};
+					color: ${predictor.foreground};
+				`,
+			},
+		},
+		MuiTooltip: {
+			styleOverrides: {
+				tooltip: css`
+					line-height: 20px;
+					padding: 8px 12px;
+					font-size: 14px;
+					color: white;
+					background-color: rgba(34, 34, 34, 0.97);
+				`,
+				arrow: css`
+					color: rgba(34, 34, 34, 0.97) !important;
+				`,
+			},
+		},
+		MuiChip: {
+			styleOverrides: {
+				root: css`
+					border: none;
+					height: auto;
+					font-size: 11px;
+					line-height: 16px;
+					font-weight: 400;
+					justify-content: flex-start;
+					border-radius: 4px;
+				`,
+				icon: css`
+					margin-left: 0;
+					margin-right: -4px;
+				`,
+				label: css`
+					padding-left: 0;
+					padding-right: 0;
+					white-space: normal;
+
+					.MuiChip-icon + & {
+						padding-left: 12px;
+					}
+				`,
+				colorSuccess: css`
+					background-color: ${predictor.success};
+					color: #000000;
+				`,
+				colorWarning: css`
+					background-color: ${predictor.warning};
+					color: #000000;
+				`,
+				colorError: css`
+					background-color: ${predictor.destructive};
+					color: #ffffff;
 				`,
 			},
 		},
