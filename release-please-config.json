@@ -16,6 +16,11 @@
 			"package-name": "@predictor-foundation/e2e",
 			"component": "e2e"
 		},
+		"packages/ui": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/ui",
+			"component": "ui"
+		},
 		"packages/squid-common": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/squid-common",

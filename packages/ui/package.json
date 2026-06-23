@@ -1,0 +1,58 @@
+{
+	"name": "@predictor-foundation/ui",
+	"version": "0.1.0",
+	"description": "Shared, app-agnostic React UI components for Predictor Foundation frontends (lifted from block-explorer)",
+	"license": "UNLICENSED",
+	"private": false,
+	"type": "module",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/ui"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
+		}
+	},
+	"files": [
+		"lib/",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"types:check": "tsc --noEmit",
+		"clean": "rm -rf lib *.tsbuildinfo"
+	},
+	"dependencies": {
+		"date-fns": "^2.29.3",
+		"date-fns-tz": "^2.0.0",
+		"decimal.js": "^10.4.3"
+	},
+	"peerDependencies": {
+		"@emotion/react": "^11.10.0",
+		"@emotion/styled": "^11.10.0",
+		"@mui/material": "^5.11.0",
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0",
+		"react-router-dom": "^6.0.0"
+	},
+	"devDependencies": {
+		"@emotion/react": "^11.10.6",
+		"@emotion/styled": "^11.10.6",
+		"@mui/material": "^5.11.14",
+		"@types/react": "^18.2.0",
+		"react": "^18.2.0",
+		"react-router-dom": "^6.30.4",
+		"typescript": "^5.6.0"
+	}
+}
