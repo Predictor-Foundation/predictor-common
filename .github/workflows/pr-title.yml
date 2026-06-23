@@ -28,6 +28,7 @@ jobs:
             biome-config
             git-hooks
             squid-common
+            design-system
           requireScope: true
           # release-please opens PRs titled "chore(main): release X" - exempt them.
           ignoreLabels: |

@@ -6,6 +6,11 @@
 	"bump-minor-pre-major": true,
 	"bump-patch-for-minor-pre-major": true,
 	"packages": {
+		"packages/design-system": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/design-system",
+			"component": "design-system"
+		},
 		"packages/squid-common": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/squid-common",
