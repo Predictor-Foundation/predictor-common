@@ -109,11 +109,7 @@ export const theme = createTheme({
 					font-weight: 500;
 					font-family: ${fontFamilies.body};
 					color: ${predictor.link};
-					text-decoration-color: transparent;
-
-					&:hover {
-						text-decoration-color: currentColor;
-					}
+					text-decoration-color: currentColor;
 				`,
 			},
 		},
