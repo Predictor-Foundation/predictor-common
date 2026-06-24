@@ -1,8 +1,8 @@
 # @predictor-foundation/design-system
 
 The shared **PRDCTR** look and feel: design tokens + a Material-UI theme, dark-native
-with the lime `#d9fe42` accent and the Syne / Inter / DM Mono type ramp. Lifted from
-the block-explorer frontend so every Predictor Foundation frontend renders identically.
+with the pale ice-blue `#e3effd` accent and the Syne / Inter / DM Mono type ramp. Lifted
+from the block-explorer frontend so every Predictor Foundation frontend renders identically.
 
 ## Install
 
