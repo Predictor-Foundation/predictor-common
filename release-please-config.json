@@ -6,6 +6,36 @@
 	"bump-minor-pre-major": true,
 	"bump-patch-for-minor-pre-major": true,
 	"packages": {
+		"packages/scale": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/scale",
+			"component": "scale"
+		},
+		"packages/substrate-primitives": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/substrate-primitives",
+			"component": "substrate-primitives"
+		},
+		"packages/chain-errors": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/chain-errors",
+			"component": "chain-errors"
+		},
+		"packages/substrate-signer": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/substrate-signer",
+			"component": "substrate-signer"
+		},
+		"packages/node-manager": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/node-manager",
+			"component": "node-manager"
+		},
+		"packages/papi-chain": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/papi-chain",
+			"component": "papi-chain"
+		},
 		"packages/design-system": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/design-system",
@@ -43,12 +73,35 @@
 		}
 	},
 	"changelog-sections": [
-		{ "type": "feat", "section": "Features" },
-		{ "type": "fix", "section": "Bug Fixes" },
-		{ "type": "refactor", "section": "Refactors" },
-		{ "type": "perf", "section": "Performance" },
-		{ "type": "deps", "section": "Dependencies" },
-		{ "type": "docs", "section": "Documentation", "hidden": false },
-		{ "type": "chore", "section": "Chores", "hidden": true }
+		{
+			"type": "feat",
+			"section": "Features"
+		},
+		{
+			"type": "fix",
+			"section": "Bug Fixes"
+		},
+		{
+			"type": "refactor",
+			"section": "Refactors"
+		},
+		{
+			"type": "perf",
+			"section": "Performance"
+		},
+		{
+			"type": "deps",
+			"section": "Dependencies"
+		},
+		{
+			"type": "docs",
+			"section": "Documentation",
+			"hidden": false
+		},
+		{
+			"type": "chore",
+			"section": "Chores",
+			"hidden": true
+		}
 	]
 }

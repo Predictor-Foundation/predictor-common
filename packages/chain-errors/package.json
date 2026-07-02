@@ -1,0 +1,41 @@
+{
+	"name": "@predictor-foundation/chain-errors",
+	"version": "0.1.0",
+	"description": "Chain-boundary error taxonomy (RetryableError / PermanentChainError / classifyChainError) + retry/backoff for the Predictor Foundation PAPI services",
+	"license": "UNLICENSED",
+	"private": false,
+	"type": "module",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/chain-errors"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
+		}
+	},
+	"files": [
+		"lib/",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"test": "node --experimental-strip-types --test 'test/*.test.ts'",
+		"types:check": "tsc --noEmit",
+		"clean": "rm -rf lib *.tsbuildinfo"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"typescript": "^5.6.0"
+	}
+}

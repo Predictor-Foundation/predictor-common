@@ -1,0 +1,42 @@
+{
+	"name": "@predictor-foundation/scale",
+	"version": "0.1.0",
+	"description": "Minimal, dependency-free SCALE codec helpers (compact, u64le, length-prefixed bytes, hex) for the Predictor Foundation",
+	"license": "UNLICENSED",
+	"private": false,
+	"type": "module",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/scale"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
+		}
+	},
+	"files": [
+		"lib/",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"test": "node --experimental-strip-types --test 'test/*.test.ts'",
+		"types:check": "tsc --noEmit",
+		"clean": "rm -rf lib *.tsbuildinfo"
+	},
+	"devDependencies": {
+		"@polkadot-api/substrate-bindings": "^0.20.3",
+		"@types/node": "^22.0.0",
+		"typescript": "^5.6.0"
+	}
+}

@@ -1,4 +1,10 @@
 {
+	"packages/scale": "0.1.0",
+	"packages/substrate-primitives": "0.1.0",
+	"packages/chain-errors": "0.1.0",
+	"packages/substrate-signer": "0.1.0",
+	"packages/node-manager": "0.1.0",
+	"packages/papi-chain": "0.1.0",
 	"packages/design-system": "0.1.2",
 	"packages/e2e": "0.1.2",
 	"packages/ui": "0.1.2",
