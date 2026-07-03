@@ -31,6 +31,13 @@ jobs:
             design-system
             e2e
             ui
+            scale
+            substrate-primitives
+            chain-errors
+            substrate-signer
+            node-manager
+            papi-chain
+            packages
           requireScope: true
           # release-please opens PRs titled "chore(main): release X" - exempt them.
           ignoreLabels: |

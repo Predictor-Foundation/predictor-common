@@ -20,20 +20,26 @@
 			"types": "./lib/index.d.ts",
 			"default": "./lib/index.js"
 		},
-		"./styles.css": "./styles.css"
+		"./tokens": {
+			"types": "./lib/tokens.d.ts",
+			"default": "./lib/tokens.js"
+		},
+		"./styles.css": "./styles.css",
+		"./tokens.css": "./tokens.css"
 	},
 	"files": [
 		"lib/",
 		"styles.css",
+		"tokens.css",
 		"README.md"
 	],
 	"engines": {
 		"node": ">=20"
 	},
 	"scripts": {
-		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"build": "rm -rf lib *.tsbuildinfo tokens.css && tsc && node scripts/gen-tokens-css.js",
 		"types:check": "tsc --noEmit",
-		"clean": "rm -rf lib *.tsbuildinfo"
+		"clean": "rm -rf lib *.tsbuildinfo tokens.css"
 	},
 	"peerDependencies": {
 		"@emotion/react": "^11.10.0",

@@ -1,0 +1,55 @@
+{
+	"name": "@predictor-foundation/substrate-signer",
+	"version": "0.1.0",
+	"description": "sr25519 key derivation (parseSuri/deriveKeypair) + address/public-key helpers for the Predictor Foundation PAPI services",
+	"license": "UNLICENSED",
+	"private": false,
+	"type": "module",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/substrate-signer"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
+		}
+	},
+	"files": [
+		"lib/",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "rm -rf lib *.tsbuildinfo && tsc",
+		"test": "node --experimental-strip-types --test 'test/*.test.ts'",
+		"types:check": "tsc --noEmit",
+		"clean": "rm -rf lib *.tsbuildinfo"
+	},
+	"dependencies": {
+		"@predictor-foundation/scale": "workspace:*",
+		"@predictor-foundation/substrate-primitives": "workspace:*"
+	},
+	"peerDependencies": {
+		"@polkadot-api/substrate-bindings": "^0.20.3",
+		"@polkadot-labs/hdkd": "^0.0.28",
+		"@polkadot-labs/hdkd-helpers": "^0.0.30",
+		"polkadot-api": "^2.1.7"
+	},
+	"devDependencies": {
+		"@polkadot-api/substrate-bindings": "^0.20.3",
+		"@polkadot-labs/hdkd": "^0.0.28",
+		"@polkadot-labs/hdkd-helpers": "^0.0.30",
+		"@types/node": "^22.0.0",
+		"polkadot-api": "^2.1.7",
+		"typescript": "^5.6.0"
+	}
+}
