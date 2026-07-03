@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/scale",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Minimal, dependency-free SCALE codec helpers (compact, u64le, length-prefixed bytes, hex) for the Predictor Foundation",
 	"license": "UNLICENSED",
 	"private": false,
