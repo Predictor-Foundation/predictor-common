@@ -14,12 +14,14 @@ export function noCase(str: string): string {
 }
 
 /**
- * Parse a string to an integer, returning `undefined` for empty, missing, or
- * non-numeric input (never `NaN`).
+ * Parse a string to an integer, returning `undefined` for empty, missing,
+ * non-numeric, or non-integer input (never `NaN`). A valid integer string such
+ * as `"0"` or `"00"` returns its number.
  */
 export function tryParseInt(str?: string): number | undefined {
 	if (!str) {
 		return undefined;
 	}
-	return +str || undefined;
+	const n = +str;
+	return Number.isInteger(n) ? n : undefined;
 }

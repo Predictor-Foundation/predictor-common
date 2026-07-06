@@ -110,7 +110,8 @@ export function emptyItemsResponse(
 		pageInfo: {
 			page: pagination.page,
 			pageSize: pagination.pageSize,
-			totalPageCount: totalCount === undefined ? undefined : 0,
+			totalPageCount:
+				totalCount === undefined ? undefined : Math.ceil(totalCount / pagination.pageSize),
 			hasPrevious: false,
 			hasNext: false,
 		},
