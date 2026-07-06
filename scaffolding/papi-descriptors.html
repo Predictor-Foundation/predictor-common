@@ -1,0 +1,202 @@
+<h1>Design note: sharing the <code>prd</code> PAPI descriptors</h1>
+
+<p>
+  <strong>Status:</strong> design proposal - not implemented.
+  <strong>Scope:</strong> how to publish the generated
+  <a href="https://papi.how">polkadot-api</a> (PAPI) <code>prd</code> descriptor
+  set plus the committed chain metadata as one shared package, co-located with
+  <code>@predictor-foundation/papi-chain</code>, so every consumer stops
+  regenerating its own copy.
+</p>
+
+<h2>1. How it works today</h2>
+
+<p>
+  The faucet backend is the only current PAPI consumer. Its setup:
+</p>
+
+<ul>
+  <li>
+    <strong>Committed metadata.</strong>
+    <code>faucet/packages/backend/.papi/metadata/prd.scale</code> is checked in.
+    <code>.papi/polkadot-api.json</code> pins the entry:
+    <pre>{
+  "version": 0,
+  "descriptorPath": ".papi/descriptors",
+  "entries": {
+    "prd": {
+      "wsUrl": "wss://chain-external.testnet.prdctr.io",
+      "metadata": ".papi/metadata/prd.scale",
+      "genesis": "0x082967ba30c9cdd763afaf0dfcb573f6ce89233cfe1e22116f0d1a672db93980",
+      "codeHash": "0xa3e6150b8faa189f8dec4647483ecffd80a3cc35c8b300ccac80c84829937084"
+    }
+  }
+}</pre>
+  </li>
+  <li>
+    <strong>Generated descriptors.</strong> <code>papi</code> compiles the
+    metadata into a local package at <code>.papi/descriptors</code>, referenced
+    as <code>"@polkadot-api/descriptors": "file:.papi/descriptors"</code>. The
+    generated <code>dist/</code> is <strong>gitignored</strong>; only
+    <code>package.json</code>, <code>generated.json</code>, and the metadata are
+    tracked.
+  </li>
+  <li>
+    <strong>Regeneration hook.</strong> <code>"postinstall": "papi"</code>
+    rebuilds the descriptors after every install. In Docker the faucet backend
+    image re-runs <code>pnpm exec papi</code> explicitly (offline, from the
+    committed <code>prd.scale</code>) because the gitignored <code>dist/</code>
+    is absent from the build context.
+  </li>
+  <li>
+    <strong>Consumption.</strong> <code>chain.ts</code> imports
+    <code>{ prd }</code> from <code>@polkadot-api/descriptors</code> and injects
+    it into the descriptor-generic <code>Chain&lt;typeof prd&gt;</code> from
+    <code>@predictor-foundation/papi-chain</code>.
+    <code>papi-chain</code> deliberately <em>ships no descriptors</em> and is
+    pinned to no runtime version - each consumer supplies its own <code>D</code>.
+  </li>
+</ul>
+
+<h3>Why this is a problem when a second consumer appears</h3>
+<ul>
+  <li>
+    <strong>Metadata duplication / drift.</strong> Each new PAPI consumer would
+    check in its own <code>prd.scale</code>. The moment the runtime upgrades,
+    they drift, and two services build against two different chain shapes with no
+    single place to bump.
+  </li>
+  <li>
+    <strong>Per-consumer toolchain coupling.</strong> Every consumer needs the
+    <code>papi</code> CLI, a <code>postinstall</code> hook, the
+    <code>.papi/</code> layout, and Docker-time regeneration logic. That is a lot
+    of identical scaffolding, and the <code>postinstall</code> hook makes CI
+    installs slower and network/tooling-sensitive.
+  </li>
+  <li>
+    <strong>The endpoint constant is duplicated.</strong> <code>wsUrl</code> in
+    <code>polkadot-api.json</code> repeats the same
+    <code>wss://chain-external.testnet.prdctr.io</code> that already lives in the
+    faucet's <code>chain.ts</code> and now in
+    <code>@predictor-foundation/network-constants</code>.
+  </li>
+</ul>
+
+<h2>2. Options</h2>
+
+<h3>Option 1 - Ship a prebuilt descriptors package (recommended)</h3>
+<p>
+  Add a new workspace package,
+  <code>@predictor-foundation/papi-descriptors</code>, next to
+  <code>papi-chain</code>. It <strong>owns the committed
+  <code>prd.scale</code></strong>, runs <code>papi</code> at
+  <em>its own</em> build time, and publishes the <em>already-generated</em>
+  descriptor <code>dist/</code> as normal package output (like every other
+  <code>lib/</code> in the monorepo). Consumers depend on it and
+  <code>import { prd } from "@predictor-foundation/papi-descriptors"</code> -
+  no <code>papi</code> CLI, no <code>postinstall</code>, no
+  <code>.papi/</code> folder, no Docker regeneration step.
+</p>
+<ul>
+  <li>
+    <strong>Pros:</strong> one source of truth for metadata; consumers are plain
+    library imports; Docker images lose the offline-regeneration dance; version
+    bumps are a single PR + semver release; pairs naturally with
+    <code>papi-chain</code>'s descriptor-generic design (<code>Chain&lt;typeof
+    prd&gt;</code>).
+  </li>
+  <li>
+    <strong>Cons:</strong> the generated <code>dist/</code> must be committed
+    <em>or</em> reliably produced in CI before publish (see build-hook note
+    below); the generated code can be large; the package must publish real files
+    rather than the current gitignored layout.
+  </li>
+</ul>
+
+<h3>Option 2 - Commit the generated descriptors in-repo, drop <code>postinstall</code></h3>
+<p>
+  Keep the descriptors inside each consumer's <code>.papi/</code>, but check the
+  generated <code>dist/</code> into git and remove the <code>postinstall</code>
+  hook and Docker regeneration. Installs and image builds get simpler.
+</p>
+<ul>
+  <li><strong>Pros:</strong> smallest change; no new package.</li>
+  <li>
+    <strong>Cons:</strong> does <em>not</em> solve duplication - each consumer
+    still carries metadata + descriptors; drift risk remains; large generated
+    blobs land in every consumer repo.
+  </li>
+</ul>
+
+<h3>Option 3 - Fold descriptors into <code>papi-chain</code></h3>
+<p>
+  Have <code>papi-chain</code> itself export <code>prd</code>.
+</p>
+<ul>
+  <li><strong>Pros:</strong> one dependency for consumers.</li>
+  <li>
+    <strong>Cons:</strong> breaks the package's core secret. <code>papi-chain</code>
+    is intentionally <em>descriptor-generic and runtime-agnostic</em>; baking in
+    the testnet's <code>prd</code> descriptors couples the reusable boundary to
+    one chain version and forces a <code>papi-chain</code> release on every
+    runtime upgrade. Rejected - it violates the module's stated boundary.
+  </li>
+</ul>
+
+<h2>3. Recommendation</h2>
+<p>
+  <strong>Option 1: a dedicated <code>@predictor-foundation/papi-descriptors</code>
+  package.</strong> It keeps <code>papi-chain</code> generic (its secret is the
+  connect/submit plumbing), gives the <code>prd</code> metadata a single owner,
+  and turns every consumer into an ordinary import. Sketch:
+</p>
+
+<pre>packages/papi-descriptors/
+├── package.json        # name @predictor-foundation/papi-descriptors, main lib/index.js
+├── .papi/
+│   ├── polkadot-api.json   # the single committed prd entry (metadata + genesis + codeHash)
+│   └── metadata/prd.scale  # the ONE committed metadata blob for the whole org
+├── src/index.ts        # re-export: export { prd } from "@polkadot-api/descriptors"
+└── lib/                # tsc + papi output, published (files: ["lib/"])</pre>
+
+<ul>
+  <li>
+    <strong>Generation:</strong> run <code>papi</code> as a <code>build</code>
+    step (not <code>postinstall</code>), so it fires once when the descriptors
+    package is built, not on every consumer install. Commit the generated
+    <code>dist/</code> (or generate-then-publish in CI) so downstream installs
+    and Docker builds need no PAPI toolchain at all.
+  </li>
+  <li>
+    <strong>Endpoint reuse:</strong> the <code>wsUrl</code> in
+    <code>polkadot-api.json</code> should match
+    <code>PREDICTOR_TESTNET.wsEndpoints[0]</code> from
+    <code>@predictor-foundation/network-constants</code>. Keep
+    <code>network-constants</code> as the human-facing source of truth for the
+    endpoint; <code>polkadot-api.json</code> only needs it for the (optional)
+    <code>papi update</code> refresh-from-chain flow.
+  </li>
+  <li>
+    <strong>Migration for the faucet:</strong> replace its
+    <code>file:.papi/descriptors</code> dependency and <code>postinstall</code>
+    with a dependency on <code>@predictor-foundation/papi-descriptors</code>;
+    delete its <code>.papi/</code> and the Docker regeneration block (shape A
+    template's optional papi section then drops out entirely).
+  </li>
+  <li>
+    <strong>Versioning:</strong> semver the descriptors package; a runtime
+    metadata upgrade is a normal minor/major release that consumers pin and bump
+    deliberately - the RAD "version your formats from day one" default for an
+    on-chain-shaped artifact many consumers depend on.
+  </li>
+</ul>
+
+<p>
+  <strong>Open question to settle before implementing:</strong> commit the
+  generated <code>dist/</code> vs. generate-in-CI-before-publish. Committing is
+  simplest and makes the package installable straight from git; generating in CI
+  keeps the repo smaller but requires the <code>papi</code> toolchain in the
+  release pipeline. Given the rest of the monorepo commits build output sparingly
+  and relies on a central build, generate-in-CI aligns better - but that decision
+  is out of scope for this note.
+</p>
