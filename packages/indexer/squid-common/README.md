@@ -25,7 +25,17 @@ Predictor Foundation family.
 - **Branded primitives.** `Ss58Address`, `BlockHeight`, `HexBytes`,
   `Ss58Prefix` - Zod-validated nominal types.
 - **Chain-coord IDs.** `chainCoordIdMake` /
-  `chainCoordTransform` for `{block}-{ext}-{evt}` style IDs.
+  `chainCoordTransform` for `{block}-{ext}-{evt}` style IDs, and
+  `defineChainCoordId([suffix])` to stamp out a whole
+  `{ schema, make, parse, assert }` id family in one call.
+- **Numeric strings.** `sumStrings`, `addStrings`, `subStrings`,
+  `divStrings`, `gtZero`, `NumericAccumulator` - precision-preserving
+  arithmetic over Postgres `numeric` values via `@subsquid/big-decimal`
+  (null-in/null-out for absence).
+- **Errors.** `BaseError` + `ErrorCode` (`DatabaseError`,
+  `InvalidInputError`, `NotFoundError`) for the resolver layer, plus
+  `UnknownVersionError` - a typegen version-drift guard thrown at the
+  chain-decoding boundary, deliberately outside the `ErrorCode` hierarchy.
 - **Substrate shape classifiers.** `classifySignatureAddress`,
   `classifyOrigin` for the chain's tagged-union envelopes.
 - **JSON helpers.** `bigintReplacer`, `serializeJson`,

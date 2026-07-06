@@ -24,7 +24,7 @@ pnpm add polkadot-api @polkadot-labs/hdkd @polkadot-labs/hdkd-helpers @polkadot-
 | `deriveDev("//Name")` | `Keypair` for a well-known dev account. |
 | `parseSuri(secret)` | `{ miniSecret, path }` - the shared secret-URI interpretation. |
 | `type Keypair` | `{ publicKey, address, signer, sign }` - PAPI signer + raw sr25519 `sign`. |
-| `AccountUtils` | `addressToPublicKey`, `publicKeyToAddress`, `isAccountPK`, `convertToAddress`, `convertToPublicKeyIfNeeded`, `generateNewAccount`, `addressFromSuri`. |
+| `AccountUtils` | `addressToPublicKey`, `addressToPublicKeyBytes`, `publicKeyToAddress`, `isAccountPK`, `convertToAddress`, `convertToPublicKeyIfNeeded`, `convertToPublicKeyBytes`, `generateNewAccount`, `addressFromSuri`. |
 
 ```ts
 import { deriveKeypair, AccountUtils } from "@predictor-foundation/substrate-signer";
