@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/substrate-primitives",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Branded Substrate primitives (validated SS58 address + non-negative Planck balance) for the Predictor Foundation",
 	"license": "UNLICENSED",
 	"private": false,

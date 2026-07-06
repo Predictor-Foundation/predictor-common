@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/substrate-signer",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "sr25519 key derivation (parseSuri/deriveKeypair) + address/public-key helpers for the Predictor Foundation PAPI services",
 	"license": "UNLICENSED",
 	"private": false,
