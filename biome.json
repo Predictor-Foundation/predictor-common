@@ -3,14 +3,13 @@
 	"extends": ["./packages/tooling/biome-config/biome.base.json"],
 	"files": {
 		"includes": [
-			"**",
 			"!**/node_modules",
 			"!**/lib",
 			"!**/dist",
 			"!**/*.generated.*",
 			"!**/generated",
 			"!**/pnpm-lock.yaml",
-			"!scaffolding/**"
+			"!scaffolding"
 		]
 	}
 }
