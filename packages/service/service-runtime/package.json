@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/service-runtime",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Long-lived service runtime building blocks (health state machine, k8s probe routes, tick loop, graceful shutdown) for the Predictor Foundation Node services",
 	"license": "UNLICENSED",
 	"private": false,

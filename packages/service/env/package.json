@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/env",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Zod-based environment parsing primitives (blank-as-unset preprocessors, typed readers, fail-fast parse) for the Predictor Foundation services",
 	"license": "UNLICENSED",
 	"private": false,

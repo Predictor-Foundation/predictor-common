@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/node-manager",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Client-side contracts for the node-manager pallet (heartbeat signing payload) for the Predictor Foundation",
 	"license": "UNLICENSED",
 	"private": false,

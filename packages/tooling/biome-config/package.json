@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/biome-config",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Shared Biome lint + format presets for the Predictor Foundation",
 	"license": "UNLICENSED",
 	"private": false,
