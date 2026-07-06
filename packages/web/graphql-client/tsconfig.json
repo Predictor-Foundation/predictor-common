@@ -1,0 +1,10 @@
+{
+	"extends": "../../tooling/tsconfig/node.json",
+	"compilerOptions": {
+		"outDir": "lib",
+		"rootDir": "src",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"types": []
+	},
+	"include": ["src"]
+}

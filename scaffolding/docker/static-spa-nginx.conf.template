@@ -1,0 +1,49 @@
+# =============================================================================
+# TEMPLATE: nginx server for a static SPA (shape C companion)
+# Derived from faucet/packages/frontend/nginx.conf and prdctr-bridge-dapp/nginx.conf.
+#
+# Port 8080 (unprivileged): the alpha-dev node security group only allows
+# cross-node pod traffic on 1025-65535 (port 80 is restricted to the LB SG), so
+# the ingress controller can only reach the pod on a high port - and it lets the
+# container run as non-root.
+#
+# Placeholders:
+#   {{PORT}}            listen port (match the Dockerfile)   e.g. 8080
+#   {{BACKEND_HOST}}    backend service:port for API proxy   e.g. faucet-backend:8080
+# =============================================================================
+server {
+    listen {{PORT}};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # --- OPTIONAL: API + health proxy to a backend service (faucet frontend) ---
+    location /api/ {
+        proxy_pass http://{{BACKEND_HOST}};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location = /healthz {
+        proxy_pass http://{{BACKEND_HOST}}/healthz;
+    }
+    # --- END ---
+
+    # --- OPTIONAL: never cache the runtime config (bridge dapp) ---
+    location = /config.js {
+        add_header Cache-Control "no-store";
+    }
+    # --- END ---
+
+    # --- OPTIONAL: long-cache immutable hashed assets (bridge dapp) ---
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    # --- END ---
+
+    # SPA history fallback.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

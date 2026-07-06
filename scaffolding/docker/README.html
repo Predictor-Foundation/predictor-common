@@ -1,0 +1,193 @@
+<h1>Predictor Dockerfile templates</h1>
+
+<p>
+  Reference / template Dockerfiles distilled from the near-identical images across
+  the Predictor repos. These are <strong>not a built package</strong> - copy a
+  template into a new service, fill the <code>{{PLACEHOLDER}}</code> tokens, and
+  delete the <code># --- OPTIONAL --- ... # --- END ---</code> blocks that do not
+  apply.
+</p>
+
+<h2>The three canonical shapes</h2>
+
+<table border="1" cellpadding="6" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Shape</th>
+      <th>Template</th>
+      <th>Real-world sources</th>
+      <th>Defining traits</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A. Node service</strong></td>
+      <td><code>node-service.Dockerfile.template</code></td>
+      <td>
+        <code>heartbeat-service/Dockerfile</code>,
+        <code>faucet/packages/backend/Dockerfile</code>
+      </td>
+      <td>
+        Standalone build context (one package). Two stages: <code>deps</code>
+        (<code>pnpm install --prod</code>) + <code>run</code>. Runs
+        <code>.ts</code> directly via
+        <code>node --experimental-strip-types</code> - <em>no compile step, no
+        <code>lib/</code></em>. Runs as <code>USER node</code> on port 8080.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>B. Subsquid processor</strong></td>
+      <td><code>subsquid-processor.Dockerfile.template</code></td>
+      <td>
+        <code>block-explorer/packages/{account,explorer,stats}/Dockerfile</code>,
+        <code>predictor-squids/packages/{node-manager,prediction-markets}/Dockerfile</code>
+      </td>
+      <td>
+        Built from the <strong>monorepo root</strong>. Private-scope
+        <code>@predictor-foundation</code> auth via a BuildKit
+        <code>--secret id=github_token</code> (never in a layer). Compiles to
+        <code>lib/</code>, packs with <code>pnpm deploy --prod --legacy /deployed</code>.
+        Processor runs <code>lib/main.js</code> (Prometheus 3000); GraphQL query
+        node on 4000.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>C. Static SPA + nginx</strong></td>
+      <td>
+        <code>static-spa-nginx.Dockerfile.template</code>,
+        <code>static-spa-nginx.conf.template</code>,
+        <code>docker-entrypoint.sh.template</code>
+      </td>
+      <td>
+        <code>faucet/packages/frontend/Dockerfile</code>,
+        <code>prdctr-bridge-dapp/Dockerfile</code>
+      </td>
+      <td>
+        Compiled SPA served by <code>nginx:1.27-alpine</code> on unprivileged
+        port 8080 with SPA history fallback. Optionally a runtime
+        <code>config.js</code> generated from env at container start.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>What varies per repo (the placeholders and optional blocks)</h2>
+
+<h3>Shape A - Node service</h3>
+<ul>
+  <li><strong>Base tag</strong>: both use <code>node:24-slim</code>.</li>
+  <li>
+    <strong>papi descriptor regeneration</strong> (<em>faucet backend only</em>):
+    the faucet copies <code>.papi/</code> and runs <code>pnpm exec papi</code> to
+    rebuild the gitignored <code>@polkadot-api/descriptors</code> from committed
+    metadata, offline. Heartbeat has no such step. This is the optional block in
+    the template - see also <code>../papi-descriptors.html</code> for a proposal
+    to share these descriptors instead of regenerating per image.
+  </li>
+  <li>
+    <strong>Lockfile</strong>: heartbeat copies <code>pnpm-lock.yaml</code> and
+    uses <code>--frozen-lockfile</code>; the faucet backend installs without a
+    per-package lockfile.
+  </li>
+</ul>
+
+<h3>Shape B - Subsquid processor</h3>
+<ul>
+  <li>
+    <strong>Production-stage layout</strong> - the one real structural fork:
+    <ul>
+      <li>
+        <em>block-explorer</em>: a single <code>squid</code> stage that
+        <code>EXPOSE 3000 4000</code>; the k8s deployment overrides the command
+        to pick processor vs query node.
+      </li>
+      <li>
+        <em>predictor-squids</em>: two stages, <code>processor</code>
+        (<code>--target processor</code>, port 3000) and <code>query-node</code>
+        (<code>npx squid-graphql-server --subscriptions</code>, port 4000).
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>RDS TLS</strong> (<em>block-explorer</em>): downloads
+    <code>global-bundle.pem</code> and sets the <code>DB_SSL*</code> /
+    <code>PGSSLMODE</code> env. predictor-squids keeps only
+    <code>NODE_EXTRA_CA_CERTS</code> and no forced DB SSL.
+  </li>
+  <li>
+    <strong>Shared workspace package</strong> (<em>block-explorer</em>):
+    <code>packages/shared</code> (its <code>package.json</code>, source, and
+    <code>scripts/init-db.js</code>). predictor-squids has no shared package but
+    copies <code>tsconfig.base.json</code>.
+  </li>
+  <li>
+    <strong>pnpm version</strong>: block-explorer installs latest
+    (<code>npm i -g pnpm</code>); predictor-squids pins
+    <code>pnpm@10.29.2</code>.
+  </li>
+  <li>
+    <strong>Per-package tokens</strong>: <code>{{PKG_DIR}}</code>,
+    <code>{{PKG_FILTER}}</code> (e.g. <code>@prd/explorer-squid</code> vs
+    <code>@predictor-squids/node-manager</code>), <code>{{CHAIN}}</code>
+    (<code>predictor</code>), and <code>NODE_MAX_HEAP</code> (explorer sets 2048
+    and passes <code>--max-old-space-size</code>).
+  </li>
+  <li>
+    <strong>Install filter</strong>: predictor-squids narrows the install with
+    <code>--filter &lt;pkg&gt;...</code>; block-explorer installs the whole
+    workspace (with a <code>--frozen-lockfile || install</code> fallback and
+    <code>--dangerously-allow-all-builds</code>).
+  </li>
+</ul>
+
+<h3>Shape C - Static SPA + nginx</h3>
+<ul>
+  <li>
+    <strong>Build strategy</strong> - the main fork:
+    <ul>
+      <li>
+        <em>faucet frontend</em>: <code>dist/</code> is built on CI
+        <em>before</em> <code>docker build</code>; the image is nginx-only
+        (<code>COPY dist ...</code>), no node stage.
+      </li>
+      <li>
+        <em>bridge dapp</em>: a <code>node:22-alpine</code> build stage runs
+        <code>pnpm build</code>, then <code>COPY --from=build /app/dist</code>.
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>Runtime <code>config.js</code></strong> (<em>bridge dapp</em>): a
+    <code>docker-entrypoint.sh</code> writes
+    <code>window.PREDICTOR_BRIDGE_CONFIG</code> from env at start, dropped into
+    <code>/docker-entrypoint.d/</code> with <code>--chmod=0755</code> (nginx's
+    runner skips non-executable <code>.sh</code>). The faucet frontend has no
+    runtime config; it proxies <code>/api</code> and <code>/healthz</code> to
+    <code>faucet-backend:8080</code> instead.
+  </li>
+  <li>
+    <strong>Asset caching</strong> (<em>bridge dapp</em>): long-cache immutable
+    <code>/assets/</code>, no-store <code>/config.js</code>.
+  </li>
+</ul>
+
+<h2>Cross-cutting conventions (shared by all shapes)</h2>
+<ul>
+  <li>Unprivileged listen port <strong>8080</strong> for HTTP services (node
+    security group only allows cross-node pod traffic on 1025-65535).</li>
+  <li>Run as <strong><code>USER node</code></strong> in the runtime stage.</li>
+  <li>Private-scope installs authenticate through <code>.npmrc</code>'s
+    <code>${GITHUB_TOKEN}</code> placeholder, supplied as a BuildKit secret -
+    never baked into a layer.</li>
+  <li>pnpm via <code>corepack</code> (node services / SPA) or
+    <code>npm i -g pnpm</code> (squids).</li>
+</ul>
+
+<h2>Files in this directory</h2>
+<ul>
+  <li><code>node-service.Dockerfile.template</code> - shape A</li>
+  <li><code>subsquid-processor.Dockerfile.template</code> - shape B</li>
+  <li><code>static-spa-nginx.Dockerfile.template</code> - shape C image</li>
+  <li><code>static-spa-nginx.conf.template</code> - shape C nginx server block</li>
+  <li><code>docker-entrypoint.sh.template</code> - shape C runtime config.js generator</li>
+</ul>

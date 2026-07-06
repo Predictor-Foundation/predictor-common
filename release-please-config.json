@@ -6,70 +6,95 @@
 	"bump-minor-pre-major": true,
 	"bump-patch-for-minor-pre-major": true,
 	"packages": {
-		"packages/scale": {
+		"packages/chain/scale": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/scale",
 			"component": "scale"
 		},
-		"packages/substrate-primitives": {
+		"packages/chain/substrate-primitives": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/substrate-primitives",
 			"component": "substrate-primitives"
 		},
-		"packages/chain-errors": {
+		"packages/chain/chain-errors": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/chain-errors",
 			"component": "chain-errors"
 		},
-		"packages/substrate-signer": {
+		"packages/chain/substrate-signer": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/substrate-signer",
 			"component": "substrate-signer"
 		},
-		"packages/node-manager": {
+		"packages/chain/node-manager": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/node-manager",
 			"component": "node-manager"
 		},
-		"packages/papi-chain": {
+		"packages/chain/papi-chain": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/papi-chain",
 			"component": "papi-chain"
 		},
-		"packages/design-system": {
+		"packages/web/design-system": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/design-system",
 			"component": "design-system"
 		},
-		"packages/e2e": {
+		"packages/tooling/e2e": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/e2e",
 			"component": "e2e"
 		},
-		"packages/ui": {
+		"packages/web/ui": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/ui",
 			"component": "ui"
 		},
-		"packages/squid-common": {
+		"packages/indexer/squid-common": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/squid-common",
 			"component": "squid-common"
 		},
-		"packages/tsconfig": {
+		"packages/tooling/tsconfig": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/tsconfig",
 			"component": "tsconfig"
 		},
-		"packages/biome-config": {
+		"packages/tooling/biome-config": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/biome-config",
 			"component": "biome-config"
 		},
-		"packages/git-hooks": {
+		"packages/tooling/git-hooks": {
 			"release-type": "node",
 			"package-name": "@predictor-foundation/git-hooks",
 			"component": "git-hooks"
+		},
+		"packages/chain/network-constants": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/network-constants",
+			"component": "network-constants"
+		},
+		"packages/service/logger": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/logger",
+			"component": "logger"
+		},
+		"packages/service/env": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/env",
+			"component": "env"
+		},
+		"packages/service/service-runtime": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/service-runtime",
+			"component": "service-runtime"
+		},
+		"packages/web/graphql-client": {
+			"release-type": "node",
+			"package-name": "@predictor-foundation/graphql-client",
+			"component": "graphql-client"
 		}
 	},
 	"changelog-sections": [

@@ -1,0 +1,57 @@
+# =============================================================================
+# TEMPLATE: Node service (TypeScript-strip runtime, no build step)
+# Canonical shape A. Derived from:
+#   - heartbeat-service/Dockerfile
+#   - faucet/packages/backend/Dockerfile
+#
+# Use for: a standalone Node backend whose runtime deps are public-registry
+# packages, run directly from `.ts` sources via Node's `--experimental-strip-types`
+# (Node 24 strips TS at load - there is NO compile step and no `lib/`).
+#
+# Build context = THIS package directory (standalone), so the monorepo's
+# cross-package workspace links do not interfere.
+#
+# Placeholders to fill:
+#   {{NODE_TAG}}       node base image tag           e.g. node:24-slim
+#   {{PORT}}           listen port                    e.g. 8080
+#   {{ENTRYPOINT_TS}}  entry source file              e.g. src/index.ts
+#
+# Optional blocks are fenced with `# --- OPTIONAL: <name> ---` ... `# --- END ---`.
+# Delete the whole block (fences included) if the feature does not apply.
+# =============================================================================
+
+FROM {{NODE_TAG}} AS deps
+WORKDIR /app
+RUN corepack enable
+# Copy the lockfile too when the package has one, so --frozen-lockfile installs
+# the exact locked versions (reproducible images). Omit pnpm-lock.yaml for a
+# package that is installed from the monorepo lockfile at publish time.
+COPY package.json pnpm-lock.yaml ./
+# --- OPTIONAL: papi descriptors (faucet backend) ---
+# Copy the committed papi metadata so descriptors can be regenerated offline.
+COPY .papi ./.papi
+# --- END ---
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+# --- OPTIONAL: papi descriptors (faucet backend) ---
+# The generated `@polkadot-api/descriptors` (file: dep at .papi/descriptors) is
+# gitignored, so regenerate it here from the committed metadata (.papi/metadata),
+# offline. Clear stale output first or papi short-circuits with "no changes".
+RUN rm -rf .papi/descriptors/dist .papi/descriptors/generated.json \
+	&& pnpm exec papi \
+	&& test -f .papi/descriptors/dist/index.js
+# --- END ---
+
+FROM {{NODE_TAG}} AS run
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT={{PORT}}
+COPY --from=deps /app/node_modules ./node_modules
+# --- OPTIONAL: papi descriptors (faucet backend) ---
+COPY --from=deps /app/.papi ./.papi
+# --- END ---
+COPY package.json ./
+COPY src ./src
+EXPOSE {{PORT}}
+USER node
+# Node strips the TypeScript types at load time - no build step.
+CMD ["node", "--experimental-strip-types", "{{ENTRYPOINT_TS}}"]

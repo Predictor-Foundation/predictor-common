@@ -1,0 +1,31 @@
+{
+	"name": "@predictor-foundation/tsconfig",
+	"version": "0.4.1",
+	"description": "Shared TypeScript config presets for the Predictor Foundation",
+	"license": "UNLICENSED",
+	"private": false,
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Predictor-Foundation/predictor-common.git",
+		"directory": "packages/tooling/tsconfig"
+	},
+	"files": [
+		"base.json",
+		"node.json",
+		"subsquid.json",
+		"react.json",
+		"README.md"
+	],
+	"exports": {
+		"./base": "./base.json",
+		"./node": "./node.json",
+		"./subsquid": "./subsquid.json",
+		"./react": "./react.json"
+	},
+	"scripts": {
+		"build": "echo 'no build step (JSON-only package)' && exit 0"
+	}
+}

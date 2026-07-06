@@ -6,15 +6,52 @@ bundle in three lines and inherit the family's conventions for free.
 
 ## Packages
 
-| Package | Audience | Purpose |
-|---|---|---|
-| [`@predictor-foundation/tsconfig`](packages/tsconfig) | any TS repo | Shared `tsconfig` presets (`base`, `node`, `subsquid`, `react`) |
-| [`@predictor-foundation/biome-config`](packages/biome-config) | any TS repo | Shared Biome lint + format config with Biome version pinned |
-| [`@predictor-foundation/git-hooks`](packages/git-hooks) | any repo | Husky-based pre-commit gate: format → lint → typecheck → audit |
-| [`@predictor-foundation/squid-common`](packages/squid-common) | Subsquid squids | Env parsing, SS58 codec, account upsert, entity cache, processor builder, branded primitives |
-| [`@predictor-foundation/design-system`](packages/design-system) | Frontends | Shared PRDCTR Material-UI theme + design tokens (colours, fonts) |
-| [`@predictor-foundation/ui`](packages/ui) | Frontends | App-agnostic React components (icons, cards, links, currency/time), with per-component subpath imports |
-| [`@predictor-foundation/e2e`](packages/e2e) | Playwright repos | Zero-setup Playwright harness: config factory + server orchestration |
+Packages live under `packages/<group>/<package>`, grouped by the layer they
+serve. Consumers install by package name (`@predictor-foundation/<name>`); the
+folder grouping is for humans, not resolution.
+
+### `tooling/` - shared build, lint & test setup (dev dependencies)
+
+| Package | Purpose |
+|---|---|
+| [`tsconfig`](packages/tooling/tsconfig) | Shared `tsconfig` presets (`base`, `node`, `subsquid`, `react`) |
+| [`biome-config`](packages/tooling/biome-config) | Shared Biome lint + format config with the Biome version pinned |
+| [`git-hooks`](packages/tooling/git-hooks) | Husky-based pre-commit gate: format → lint → typecheck → audit |
+| [`e2e`](packages/tooling/e2e) | Zero-setup Playwright harness: config factory + server orchestration |
+
+### `chain/` - Substrate / polkadot-api client (runtime)
+
+| Package | Purpose |
+|---|---|
+| [`substrate-primitives`](packages/chain/substrate-primitives) | Branded, validated SS58 address + non-negative Planck balance |
+| [`substrate-signer`](packages/chain/substrate-signer) | sr25519 key derivation (`parseSuri`/`deriveKeypair`) + address helpers |
+| [`scale`](packages/chain/scale) | Minimal, dependency-free SCALE codec helpers |
+| [`chain-errors`](packages/chain/chain-errors) | Chain-boundary error taxonomy + retry/backoff |
+| [`papi-chain`](packages/chain/papi-chain) | Descriptor-generic polkadot-api chain boundary (connect / read / submit) |
+| [`node-manager`](packages/chain/node-manager) | Client-side contracts for the node-manager pallet (heartbeat payload) |
+| [`network-constants`](packages/chain/network-constants) | Single source of truth for network coordinates (prefix, decimals, symbol, endpoints) |
+
+### `indexer/` - Subsquid
+
+| Package | Purpose |
+|---|---|
+| [`squid-common`](packages/indexer/squid-common) | Env parsing, SS58 codec, account upsert, entity cache, processor builder, id families, branded primitives |
+
+### `service/` - long-lived Node services (daemons, HTTP APIs)
+
+| Package | Purpose |
+|---|---|
+| [`logger`](packages/service/logger) | Tiny dependency-free structured JSON-lines logger |
+| [`env`](packages/service/env) | Zod-based environment parsing primitives (fail-fast) |
+| [`service-runtime`](packages/service/service-runtime) | Health state machine, k8s probe routes, tick loop, graceful shutdown |
+
+### `web/` - frontend
+
+| Package | Purpose |
+|---|---|
+| [`design-system`](packages/web/design-system) | Shared PRDCTR Material-UI theme + design tokens |
+| [`ui`](packages/web/ui) | App-agnostic React components + pure utils (address/amount/date/string), per-component subpath imports |
+| [`graphql-client`](packages/web/graphql-client) | Framework-light GraphQL-over-HTTP client + React data hooks (`/react` subpath) |
 
 ## Quick start (consumer repo)
 

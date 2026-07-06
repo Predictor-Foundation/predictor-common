@@ -1,0 +1,122 @@
+# =============================================================================
+# TEMPLATE: Subsquid processor (workspace build + `pnpm deploy` + query node)
+# Canonical shape B. Derived from:
+#   - block-explorer/packages/{account,explorer,stats}/Dockerfile  (single squid stage)
+#   - predictor-squids/packages/{node-manager,prediction-markets}/Dockerfile
+#       (split processor + query-node stages)
+#
+# Use for: a Subsquid Substrate indexer built from the MONOREPO ROOT, that
+# compiles to `lib/`, is packed with `pnpm deploy --prod --legacy`, and runs
+# the processor (`lib/main.js`) and/or the GraphQL query node.
+#
+# Build from the monorepo root, passing the private-scope token as a BuildKit
+# secret so it never lands in a layer:
+#   GITHUB_TOKEN=$(gh auth token) \
+#     docker build . -f packages/{{PKG_DIR}}/Dockerfile \
+#     --secret id=github_token,env=GITHUB_TOKEN --target processor
+#
+# Placeholders to fill:
+#   {{NODE_TAG}}       node base image tag           e.g. node:24-alpine
+#   {{PNPM_VERSION}}   pinned pnpm (or omit to use corepack default)
+#   {{PKG_DIR}}        package dir under packages/    e.g. explorer, node-manager
+#   {{PKG_FILTER}}     pnpm workspace filter          e.g. @prd/explorer-squid
+#   {{CHAIN}}          CHAIN env value                e.g. predictor
+#
+# Optional blocks are fenced with `# --- OPTIONAL: <name> ---` ... `# --- END ---`.
+# The two production-stage layouts are mutually exclusive - keep exactly one:
+#   LAYOUT 1 (block-explorer): one `squid` stage exposing 3000+4000.
+#   LAYOUT 2 (predictor-squids): split `processor` (3000) + `query-node` (4000).
+# =============================================================================
+
+FROM {{NODE_TAG}} AS builder
+WORKDIR /workspace
+
+# --- OPTIONAL: AWS RDS TLS (any squid that talks to RDS over SSL) ---
+RUN apk add --no-cache curl \
+    && curl -o /tmp/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+# --- END ---
+
+RUN npm install -g pnpm@{{PNPM_VERSION}}
+
+# Copy workspace manifests first for cached dependency resolution.
+# .npmrc holds only the ${GITHUB_TOKEN} placeholder, not a secret.
+COPY --chown=node:node pnpm-workspace.yaml package.json pnpm-lock.yaml* .npmrc ./
+# --- OPTIONAL: shared tsconfig at repo root (predictor-squids) ---
+COPY --chown=node:node tsconfig.base.json ./
+# --- END ---
+COPY --chown=node:node packages/{{PKG_DIR}}/package.json packages/{{PKG_DIR}}/package.json
+# --- OPTIONAL: shared package (block-explorer's packages/shared) ---
+COPY --chown=node:node packages/shared/package.json packages/shared/package.json
+# --- END ---
+
+# GitHub Packages auth for @predictor-foundation, scoped to this step only.
+RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
+    pnpm install --frozen-lockfile --filter {{PKG_FILTER}}...
+
+COPY --chown=node:node packages/{{PKG_DIR}}/ packages/{{PKG_DIR}}/
+# --- OPTIONAL: shared package (block-explorer) ---
+COPY --chown=node:node packages/shared/ packages/shared/
+# --- END ---
+
+WORKDIR /workspace/packages/{{PKG_DIR}}
+RUN pnpm run build
+
+WORKDIR /workspace
+RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
+    pnpm --filter {{PKG_FILTER}} deploy --prod --legacy /deployed \
+    && cp -r /workspace/packages/{{PKG_DIR}}/lib /deployed/lib \
+    && cp -r /workspace/packages/{{PKG_DIR}}/db /deployed/db \
+    && cp /workspace/packages/{{PKG_DIR}}/schema.graphql /deployed/schema.graphql
+
+# =============================================================================
+# LAYOUT 1 - single production stage (block-explorer). EXPOSE both ports; the
+# k8s command overrides CMD to select processor vs query node.
+# =============================================================================
+FROM {{NODE_TAG}} AS squid
+WORKDIR /squid
+
+ENV PROCESSOR_PROMETHEUS_PORT=3000
+ENV CHAIN={{CHAIN}}
+# --- OPTIONAL: RDS SSL env (paired with the cert download above) ---
+ENV DB_SSL=true
+ENV DB_SSL_CA_FILE=/squid/global-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/squid/global-bundle.pem
+ENV DB_SSL_REJECT_UNAUTHORIZED=true
+ENV PGSSLMODE=require
+# --- END ---
+
+COPY --from=builder /deployed .
+# --- OPTIONAL: DB init script (block-explorer's packages/shared) ---
+COPY packages/shared/scripts/init-db.js scripts/init-db.js
+# --- END ---
+# --- OPTIONAL: RDS cert into the runtime image ---
+COPY --from=builder /tmp/global-bundle.pem .
+# --- END ---
+
+RUN chown -R node:node /squid
+USER node
+EXPOSE 3000 4000
+CMD sh -c "node -r dotenv/config lib/main.js"
+
+# =============================================================================
+# LAYOUT 2 - split stages (predictor-squids). Build `--target processor` or
+# `--target query-node`. Delete LAYOUT 1 above if you use this.
+# =============================================================================
+FROM {{NODE_TAG}} AS processor
+WORKDIR /squid
+ENV PROCESSOR_PROMETHEUS_PORT=3000
+ENV NODE_EXTRA_CA_CERTS=/squid/global-bundle.pem
+COPY --from=builder /deployed .
+COPY --from=builder /tmp/global-bundle.pem .
+RUN chown -R node:node /squid
+USER node
+EXPOSE 3000
+CMD ["node", "-r", "dotenv/config", "lib/main.js"]
+
+FROM {{NODE_TAG}} AS query-node
+WORKDIR /squid
+COPY --from=builder /deployed .
+RUN chown -R node:node /squid
+USER node
+EXPOSE 4000
+CMD ["npx", "squid-graphql-server", "--subscriptions"]

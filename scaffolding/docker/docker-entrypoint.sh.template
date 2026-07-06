@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+# =============================================================================
+# TEMPLATE: runtime config.js generator (shape C companion)
+# Derived from prdctr-bridge-dapp/docker-entrypoint.sh.
+#
+# Dropped into /docker-entrypoint.d/ by the Dockerfile (must be chmod 0755 or
+# nginx's entrypoint runner skips it). At container start it writes a small JS
+# file that publishes deploy-time env onto `window.<APP>_CONFIG`, so the SAME
+# built image can be pointed at a different environment without a rebuild.
+#
+# Fill: {{WINDOW_KEY}} (e.g. PREDICTOR_BRIDGE_CONFIG) and the KEY:${ENV:-default}
+# lines for your app. Defaults below are the bridge dapp's real values - replace
+# with yours, or import them from @predictor-foundation/network-constants at
+# build time instead of hardcoding.
+# =============================================================================
+set -eu
+
+cat > /usr/share/nginx/html/config.js <<EOF_CONFIG
+window.{{WINDOW_KEY}} = {
+  ETH_CHAIN_ID: "${ETH_CHAIN_ID:-11155111}",
+  NETWORK_LABEL: "${NETWORK_LABEL:-Dev}",
+  PRD_DECIMALS: "${PRD_DECIMALS:-10}",
+  ETH_RPC_URL: "${ETH_RPC_URL:-}",
+  PREDICTOR_WS_URL: "${PREDICTOR_WS_URL:-ws://127.0.0.1:9944}",
+  PREDICTOR_EXPLORER_BASE_URL: "${PREDICTOR_EXPLORER_BASE_URL:-https://explorer.dev.prdctr.io}",
+  PREDICTOR_EXPLORER_GRAPHQL_URL: "${PREDICTOR_EXPLORER_GRAPHQL_URL:-https://explorer-api.dev.prdctr.io/graphql}",
+  PRD_TOKEN_ADDRESS_STORAGE_PATH: "${PRD_TOKEN_ADDRESS_STORAGE_PATH:-tokenManager.avtTokenContract}"
+};
+EOF_CONFIG
+
+exec "$@"
