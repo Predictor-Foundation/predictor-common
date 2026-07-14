@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/Predictor-Foundation/predictor-common/compare/papi-chain-v0.1.3...papi-chain-v0.1.4) (2026-07-14)
+
+
+### Features
+
+* **papi-chain:** add toggleable smoldot light-client transport ([#19](https://github.com/Predictor-Foundation/predictor-common/issues/19)) ([f381934](https://github.com/Predictor-Foundation/predictor-common/commit/f381934c540c6ca55a0cabb27cbd2d7a2aebc156))
+
 ## [0.1.3](https://github.com/Predictor-Foundation/predictor-common/compare/papi-chain-v0.1.2...papi-chain-v0.1.3) (2026-07-14)
 
 
