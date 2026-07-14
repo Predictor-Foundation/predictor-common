@@ -76,7 +76,8 @@ export function parseSuri(secret: string): Suri {
  * for a junction-less SURI (raw `0x` seed or bare mnemonic, `path === ""`) hdkd does no derivation and
  * would otherwise return the seed itself, but `@polkadot-labs/hdkd-helpers`' `ensureBytes` first copies
  * it via `Uint8Array.from`, so the closure holds a distinct buffer and wiping this one cannot corrupt it.
- * That copy is a dependency-internal detail, so the signing-after-wipe tests guard it explicitly.
+ * That copy is a dependency-internal detail, so the tests derive junction-less keys (a raw `0x` seed
+ * and a bare mnemonic), then sign and verify after the wipe to guard exactly this aliasing path.
  */
 function withSeed<T>(seed: Uint8Array, use: (seed: Uint8Array) => T): T {
 	try {
