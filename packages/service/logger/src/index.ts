@@ -48,6 +48,77 @@ export interface LoggerOptions {
 	base?: LogFields;
 	/** Source of the fallback `LOG_LEVEL`; defaults to `process.env`. */
 	env?: Record<string, string | undefined>;
+	/**
+	 * Field names (matched case-insensitively, at any depth) whose values are replaced with
+	 * `[redacted]` before a line is written. Defaults to {@link DEFAULT_REDACT_KEYS}. Pass `[]` to
+	 * disable. Redaction is by KEY, not by value shape: a secret seed and an on-chain tx hash are both
+	 * `0x`+64 hex, so value-pattern redaction would destroy the tx hashes/addresses you actually want in
+	 * logs. Keep secrets in named fields (never interpolated into `msg`) so this can catch them.
+	 */
+	redactKeys?: readonly string[];
+}
+
+/**
+ * Field names redacted by default (lower-cased). Covers the secret material a chain service might
+ * accidentally pass in a log field - secret URIs, seeds, mnemonics, private keys, passwords, tokens.
+ */
+export const DEFAULT_REDACT_KEYS: readonly string[] = [
+	"suri",
+	"secret",
+	"secretkey",
+	"secret_key",
+	"seed",
+	"minisecret",
+	"mini_secret",
+	"mnemonic",
+	"privatekey",
+	"private_key",
+	"password",
+	"token",
+	"apikey",
+	"api_key",
+];
+
+/** The marker a redacted value is replaced with. */
+const REDACTED = "[redacted]";
+/** The marker substituted for a value already seen on the current path (an accidental cycle). */
+const CIRCULAR = "[circular]";
+
+/** True only for a `{}`-style record; the sole object kind {@link redact} traverses and rebuilds. */
+function isPlainRecord(value: object): boolean {
+	const proto = Object.getPrototypeOf(value);
+	return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Deep-copy `value`, replacing any value whose key is in `keys` (lower-cased) with {@link REDACTED}.
+ * Only arrays and plain records are traversed and rebuilt; a `Date`, `Map`/`Set`, typed array, `Error`,
+ * or class instance is passed through untouched, so redaction never degrades its serialization (a `Date`
+ * must still log as its ISO string, not `{}`). `seen` guards against an accidental reference cycle
+ * recursing until the stack overflows before `write` could stringify it.
+ */
+function redact(value: unknown, keys: Set<string>, seen: WeakSet<object> = new WeakSet()): unknown {
+	// `seen` is PATH-scoped (added before descending, removed after) so a true cycle renders as
+	// "[circular]" while a value merely aliased under two sibling keys (a diamond) still serializes fully.
+	if (Array.isArray(value)) {
+		if (seen.has(value)) return CIRCULAR;
+		seen.add(value);
+		const mapped = value.map((v) => redact(v, keys, seen));
+		seen.delete(value);
+		return mapped;
+	}
+	if (value !== null && typeof value === "object") {
+		if (!isPlainRecord(value)) return value; // Date, Map/Set, Error, typed array, class instance
+		if (seen.has(value)) return CIRCULAR;
+		seen.add(value);
+		const out: Record<string, unknown> = {};
+		for (const [k, v] of Object.entries(value)) {
+			out[k] = keys.has(k.toLowerCase()) ? REDACTED : redact(v, keys, seen);
+		}
+		seen.delete(value);
+		return out;
+	}
+	return value;
 }
 
 /** Parse an untrusted level string into a `LogLevel`, or `null` if unknown. */
@@ -77,12 +148,16 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	const level = options.level ?? parseLogLevel(env.LOG_LEVEL) ?? "info";
 	const minLevel = LEVEL_ORDER[level];
 	const base = options.base ?? {};
+	const redactKeys = new Set(
+		(options.redactKeys ?? DEFAULT_REDACT_KEYS).map((k) => k.toLowerCase()),
+	);
 
 	const emit = (at: LogLevel, msg: string, fields?: LogFields): void => {
 		if (LEVEL_ORDER[at] < minLevel) {
 			return;
 		}
-		write(at, msg, fields ? { ...base, ...fields } : base);
+		const merged = fields ? { ...base, ...fields } : base;
+		write(at, msg, redactKeys.size > 0 ? (redact(merged, redactKeys) as LogFields) : merged);
 	};
 
 	return {
@@ -90,7 +165,9 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 		info: (msg, fields) => emit("info", msg, fields),
 		warn: (msg, fields) => emit("warn", msg, fields),
 		error: (msg, fields) => emit("error", msg, fields),
-		child: (bindings) => createLogger({ level, base: { ...base, ...bindings }, env }),
+		// Carry redactKeys into children so a bound sub-logger keeps the same redaction policy.
+		child: (bindings) =>
+			createLogger({ level, base: { ...base, ...bindings }, env, redactKeys: options.redactKeys }),
 	};
 }
 

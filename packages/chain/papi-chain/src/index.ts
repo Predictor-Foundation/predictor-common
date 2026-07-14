@@ -23,7 +23,11 @@ import {
 	type PolkadotSigner,
 	type TypedApi,
 } from "polkadot-api";
-import { getWsProvider } from "polkadot-api/ws";
+import { getWsProvider, type SocketLoggerFn, type StatusChange } from "polkadot-api/ws";
+
+// Re-exported so a consumer can type an `onStatusChanged` handler / read `status()` without reaching
+// into polkadot-api's subpath directly.
+export type { SocketLoggerFn, StatusChange } from "polkadot-api/ws";
 
 /**
  * The on-chain extrinsic hash. Direct submission uses it as the transaction handle (there is no
@@ -67,6 +71,16 @@ export interface ChainOptions {
 	readonly readTimeoutMs?: number;
 	/** Submit timeout (ms). A submit resolves only at finalization, so this is far larger. Default 120_000. */
 	readonly submitTimeoutMs?: number;
+	/**
+	 * Called on every WebSocket status transition (connecting/connected/error/close). A long-lived
+	 * consumer uses it to observe connectivity and re-drive subscriptions after a reconnect; the last
+	 * status is also available via {@link ChainBase.status}.
+	 */
+	readonly onStatusChanged?: (status: StatusChange) => void;
+	/** Idle time (ms) before a silent socket is treated as stale and rotated. PAPI default is 40_000. */
+	readonly heartbeatTimeout?: number;
+	/** Optional sink for the ws provider's own connection logs. */
+	readonly logger?: SocketLoggerFn;
 }
 
 const DEFAULT_READ_TIMEOUT_MS = 15_000;
@@ -80,18 +94,51 @@ export class ChainBase {
 	readonly #endpoint: string | string[];
 	readonly #readTimeoutMs: number;
 	readonly #submitTimeoutMs: number;
+	readonly #onStatusChanged: ((status: StatusChange) => void) | undefined;
+	readonly #heartbeatTimeout: number | undefined;
+	readonly #logger: SocketLoggerFn | undefined;
+	#lastStatus: StatusChange | undefined;
 	#client: PolkadotClient | undefined;
+	// Bumped on every connect and every disconnect; a status callback records only when its generation is
+	// still current, so a late callback from a torn-down provider cannot repopulate #lastStatus.
+	#generation = 0;
 
 	constructor(options: ChainOptions) {
 		this.#endpoint = options.endpoint;
 		this.#readTimeoutMs = options.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS;
 		this.#submitTimeoutMs = options.submitTimeoutMs ?? DEFAULT_SUBMIT_TIMEOUT_MS;
+		this.#onStatusChanged = options.onStatusChanged;
+		this.#heartbeatTimeout = options.heartbeatTimeout;
+		this.#logger = options.logger;
 	}
 
 	/** The cached PAPI client (created on first use). */
 	client(): PolkadotClient {
-		if (!this.#client) this.#client = createClient(getWsProvider(this.#endpoint));
+		if (!this.#client) {
+			const generation = ++this.#generation;
+			this.#client = createClient(
+				getWsProvider(this.#endpoint, {
+					// Record every transition so `status()` can report the latest even without an app callback,
+					// then forward to the consumer's handler. Callbacks from a provider superseded by a later
+					// disconnect() are dropped via the generation guard.
+					onStatusChanged: (status) => {
+						if (generation !== this.#generation) return;
+						this.#lastStatus = status;
+						this.#onStatusChanged?.(status);
+					},
+					...(this.#heartbeatTimeout !== undefined
+						? { heartbeatTimeout: this.#heartbeatTimeout }
+						: {}),
+					...(this.#logger ? { logger: this.#logger } : {}),
+				}),
+			);
+		}
 		return this.#client;
+	}
+
+	/** The last observed WebSocket status, or `undefined` before the client has connected. */
+	status(): StatusChange | undefined {
+		return this.#lastStatus;
 	}
 
 	/** Wrap a chain read with a timeout and error classification. */
@@ -189,8 +236,11 @@ export class ChainBase {
 
 	/** Tear down the client and all its subscriptions. Idempotent. */
 	disconnect(): void {
+		// Invalidate the current provider's status callbacks before tearing it down.
+		this.#generation++;
 		this.#client?.destroy();
 		this.#client = undefined;
+		this.#lastStatus = undefined;
 	}
 }
 

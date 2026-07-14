@@ -66,16 +66,33 @@ export function parseSuri(secret: string): Suri {
 	return { miniSecret: entropyToMiniSecret(mnemonicToEntropy(phrase)), path };
 }
 
+/**
+ * Run `use(seed)` and then wipe the seed in place, even if `use` throws. This is the single, enforced
+ * home of the "consume the seed, then zero it" protocol: every derivation routes through it, so no call
+ * site can forget the wipe and leave a mini-secret lingering on the heap where a later leak could expose
+ * it. Only the *seed* is zeroable; the derived secret key lives inside the keypair's `sign` closure
+ * (owned by `@polkadot-labs/hdkd`) and is not reachable to wipe - shrinking the exposure window is the
+ * aim, not eliminating in-memory key material. Safe because hdkd derives eagerly: by the time `use`
+ * returns, the seed has been read and the derived key copied out, so wiping cannot corrupt it.
+ */
+function withSeed<T>(seed: Uint8Array, use: (seed: Uint8Array) => T): T {
+	try {
+		return use(seed);
+	} finally {
+		seed.fill(0);
+	}
+}
+
 /** Derive an sr25519 keypair from a secret (see {@link parseSuri} for the accepted forms). */
 export function deriveKeypair(secret: string): Keypair {
 	const { miniSecret, path } = parseSuri(secret);
-	return wrap(sr25519CreateDerive(miniSecret)(path));
+	return withSeed(miniSecret, (seed) => wrap(sr25519CreateDerive(seed)(path)));
 }
 
 /** Derive a well-known dev account (e.g. `//Alice`, `//Bob`) from the standard dev phrase. */
 export function deriveDev(path: `//${string}`): Keypair {
-	const derive = sr25519CreateDerive(entropyToMiniSecret(mnemonicToEntropy(DEV_PHRASE)));
-	return wrap(derive(path));
+	const miniSecret = entropyToMiniSecret(mnemonicToEntropy(DEV_PHRASE));
+	return withSeed(miniSecret, (seed) => wrap(sr25519CreateDerive(seed)(path)));
 }
 
 function wrap(keypair: { publicKey: Uint8Array; sign: (m: Uint8Array) => Uint8Array }): Keypair {
@@ -156,14 +173,17 @@ export const AccountUtils = {
 		address: string;
 		publicKey: `0x${string}`;
 	} {
-		const seed = crypto.getRandomValues(new Uint8Array(32));
-		const keypair = sr25519CreateDerive(seed)("");
-		return {
-			mnemonic: null,
-			seed: toHex(seed),
-			address: ss58Address(keypair.publicKey, PRD_SS58_PREFIX),
-			publicKey: toHex(keypair.publicKey),
-		};
+		return withSeed(crypto.getRandomValues(new Uint8Array(32)), (seed) => {
+			const keypair = sr25519CreateDerive(seed)("");
+			// `seed` (hex) is the intended backup, captured here before withSeed wipes the buffer: the
+			// returned hex string keeps the value, the mutable Uint8Array copy does not linger.
+			return {
+				mnemonic: null,
+				seed: toHex(seed),
+				address: ss58Address(keypair.publicKey, PRD_SS58_PREFIX),
+				publicKey: toHex(keypair.publicKey),
+			};
+		});
 	},
 
 	/**
@@ -172,7 +192,9 @@ export const AccountUtils = {
 	 */
 	addressFromSuri(suri: string): string {
 		const { miniSecret, path } = parseSuri(suri);
-		return ss58Address(sr25519CreateDerive(miniSecret)(path).publicKey, PRD_SS58_PREFIX);
+		return withSeed(miniSecret, (seed) =>
+			ss58Address(sr25519CreateDerive(seed)(path).publicKey, PRD_SS58_PREFIX),
+		);
 	},
 };
 
