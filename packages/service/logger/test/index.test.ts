@@ -64,6 +64,60 @@ test("redacts secret-named fields (case-insensitive, recursive, in arrays)", () 
 	assert.equal(line.signers[0].address, "prd1...");
 });
 
+test("redacts compound secret names by word boundary (camelCase, snake_case, kebab-case)", () => {
+	const log = createLogger({ level: "info", env: {} });
+	log.info("compounds", {
+		accessToken: "a",
+		refreshToken: "b",
+		authToken: "c",
+		clientSecret: "d",
+		dbPassword: "e",
+		apiKey: "f",
+		authorization: "g",
+		privateKey: "h",
+		secret_key: "i",
+		"auth-token": "j",
+	});
+	const line = parse(out);
+	for (const k of [
+		"accessToken",
+		"refreshToken",
+		"authToken",
+		"clientSecret",
+		"dbPassword",
+		"apiKey",
+		"authorization",
+		"privateKey",
+		"secret_key",
+		"auth-token",
+	]) {
+		assert.equal(line[k], "[redacted]", `${k} should be redacted`);
+	}
+});
+
+test("keeps non-secret fields whose names merely resemble secret ones", () => {
+	const log = createLogger({ level: "info", env: {} });
+	log.info("safe", {
+		publicKey: "pk",
+		signingKey: "sk",
+		txHash: "0xabc",
+		blockHash: "0xdef",
+		blockNumber: 7,
+		address: "prd1...",
+		nodeId: "n1",
+		count: 3,
+	});
+	const line = parse(out);
+	assert.equal(line.publicKey, "pk");
+	assert.equal(line.signingKey, "sk");
+	assert.equal(line.txHash, "0xabc");
+	assert.equal(line.blockHash, "0xdef");
+	assert.equal(line.blockNumber, 7);
+	assert.equal(line.address, "prd1...");
+	assert.equal(line.nodeId, "n1");
+	assert.equal(line.count, 3);
+});
+
 test("keeps non-secret fields even when they are 0x-hex (tx hashes, addresses)", () => {
 	const log = createLogger({ level: "info", env: {} });
 	const txHash = `0x${"ab".repeat(32)}`;
