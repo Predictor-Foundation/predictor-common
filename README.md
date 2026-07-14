@@ -105,11 +105,27 @@ Subsquid repos extend `@predictor-foundation/tsconfig/subsquid` and
   package(s) bump on the next release.
 - **Lint/format:** Biome, dogfood-extending `@predictor-foundation/biome-config/base`.
 - **TypeScript:** dogfood-extending `@predictor-foundation/tsconfig/base`.
+- **Dependency versions:** shared third-party versions (`typescript`, `@types/node`,
+  `polkadot-api`, `@polkadot-*`, `zod`) live in the `catalog:` block of
+  `pnpm-workspace.yaml`. Every package references `catalog:` instead of a literal
+  range, so a version can never drift between packages. `scripts/check-catalog.mjs`
+  (run as `pnpm lint:catalog`) fails if any cataloged dep uses a literal range.
+- **Supply-chain cooldown:** a third-party version must be public for 24h
+  (`minimumReleaseAge`) before it can install, and no dependency may run install
+  lifecycle scripts unless listed in `onlyBuiltDependencies` (empty by default).
+  Our own `@predictor-foundation/*` scope is excluded from the cooldown. Requires
+  pnpm 10 (pinned via `packageManager`).
 
 ## Development
 
 ```bash
 pnpm install
 pnpm -r build
+pnpm -r run typecheck   # also `pnpm -r run types:check`
+pnpm -r run test        # unit tests run TypeScript directly (Node >= 22.6)
 pnpm lint
+pnpm lint:catalog       # catalog-consistency check
 ```
+
+CI runs the same build → typecheck → test → lint → catalog steps on Node 24.
+Published libraries still target `node >=20` (they ship compiled JS).

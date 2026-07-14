@@ -27,9 +27,39 @@ nodeLog.warn("retrying", { attempt: 2 });
 When `level` is omitted it is resolved from `LOG_LEVEL`, then defaults to
 `info`. An unrecognised `LOG_LEVEL` falls back to `info` rather than throwing.
 
+## Redaction
+
+Secret-named fields are replaced with `[redacted]` before a line is written, at
+any depth of the fields object:
+
+```ts
+logger.info("signing", { suri: "//Alice", accessToken: "abc" });
+// {"level":"info","msg":"signing","suri":"[redacted]","accessToken":"[redacted]"}
+```
+
+- **Matched by word boundary, not exact equality.** A field is redacted if its
+  full lower-cased name is in the set, or any of its camelCase / snake_case /
+  kebab-case words is - so `token` catches `accessToken`, `refresh_token`, and
+  `auth-token` alike. This biases toward over-redaction (e.g. `tokenCount`),
+  which is the safe default for a security feature.
+- **Matched by key, not by value shape.** A secret seed and an on-chain tx hash
+  are both `0x`+64 hex, so value-pattern redaction would destroy the very
+  hashes/addresses you want in logs. Keep secrets in named fields, never
+  interpolated into `msg`.
+- **Structured values pass through intact.** Only arrays and plain records are
+  traversed; a `Date`, `Map`/`Set`, `Error`, typed array, or class instance is
+  left untouched so its serialization is preserved. Accidental reference cycles
+  render as `[circular]`.
+
+Defaults are in `DEFAULT_REDACT_KEYS` (suri, secret, seed, mnemonic, password,
+token, credential(s), authorization, plus joined compounds like `apikey` and
+`privatekey`). Override with the `redactKeys` option; pass `[]` to disable.
+Child loggers inherit the parent's redaction policy.
+
 ## Exports
 
 - `createLogger(options?)` - build an immutable `Logger`.
 - `logger` - a process-wide default configured from `LOG_LEVEL` at import.
 - `parseLogLevel(value)` - parse an untrusted string into a `LogLevel | null`.
+- `DEFAULT_REDACT_KEYS` - the field-name words redacted by default.
 - Types: `Logger`, `LogLevel`, `LogFields`, `LoggerOptions`.

@@ -33,6 +33,14 @@ const alice = deriveKeypair("//Alice");
 const pubkey = AccountUtils.addressToPublicKey(alice.address);
 ```
 
+## Secret handling
+
+Every derivation path (`deriveKeypair`, `deriveDev`, `AccountUtils.generateNewAccount`,
+`addressFromSuri`) zeroes the mini-secret buffer in place immediately after use, so a
+seed does not linger on the heap. This shrinks the exposure window; it does not eliminate
+in-memory key material - the derived signing key lives inside the keypair's `sign` closure
+(owned by `@polkadot-labs/hdkd`) and is not reachable to wipe.
+
 ## Scripts
 
 ```bash
