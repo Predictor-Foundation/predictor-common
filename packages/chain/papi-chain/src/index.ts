@@ -298,7 +298,9 @@ export class ChainBase {
 		this.#client?.destroy();
 		this.#client = undefined;
 		this.#lastStatus = undefined;
-		this.#smoldot?.terminate();
+		// terminate() can reject (AlreadyDestroyedError/CrashError if the worker already crashed); teardown
+		// is best-effort and idempotent, so swallow it rather than leak an unhandled rejection.
+		this.#smoldot?.terminate().catch(() => {});
 		this.#smoldot = undefined;
 	}
 }
