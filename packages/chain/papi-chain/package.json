@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/papi-chain",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"description": "Descriptor-generic polkadot-api chain boundary (connect, timed reads, signed/unsigned submit) for the Predictor Foundation services",
 	"license": "UNLICENSED",
 	"private": false,
