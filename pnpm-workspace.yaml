@@ -1,2 +1,31 @@
 packages:
   - packages/*/*
+
+# --- Supply-chain hardening ---
+# Don't install a third-party version until it has been public for this many minutes
+# (24h), so a compromised release is caught (and yanked) before it can ever be installed.
+# Our own scoped packages are excluded so an urgent internal fix is not delayed.
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@predictor-foundation/*'
+
+# No dependency may run install/postinstall lifecycle scripts unless it is listed here
+# (the primary execution vector in the 2025 npm worms). Empty = none are trusted; add a
+# package explicitly only when a build genuinely requires it.
+onlyBuiltDependencies: []
+
+# --- Dependency catalog ---
+# Single source of truth for the third-party versions shared across packages. Each package
+# references `catalog:` instead of a literal range, so upgrading is one edit here and a version
+# can never drift between packages. Enforced by `syncpack lint` in CI and pre-commit. (react is
+# intentionally left out - its version story differs across the web packages and is not a
+# single-version dependency.)
+catalog:
+  typescript: ^5.6.0
+  '@types/node': ^22.0.0
+  polkadot-api: ^2.1.7
+  '@polkadot-api/substrate-bindings': ^0.20.3
+  '@polkadot-labs/hdkd': ^0.0.28
+  '@polkadot-labs/hdkd-helpers': ^0.0.30
+  zod: ^4.3.6
+

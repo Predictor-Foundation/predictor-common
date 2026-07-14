@@ -16,7 +16,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # Node 24 for CI: the packages' unit tests run TypeScript directly via
+          # --experimental-strip-types (Node >=22.6). The published libraries still
+          # target node >=20 (they ship compiled JS).
+          node-version: "24"
           cache: "pnpm"
           registry-url: "https://npm.pkg.github.com"
           scope: "@predictor-foundation"
@@ -26,5 +29,14 @@ jobs:
       - name: build
         run: pnpm -r build
 
+      - name: typecheck
+        run: pnpm -r run typecheck
+
+      - name: test
+        run: pnpm -r run test
+
       - name: lint
         run: pnpm lint
+
+      - name: catalog consistency
+        run: pnpm run lint:catalog

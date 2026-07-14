@@ -9,15 +9,16 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write",
 		"format": "biome format . --write",
-		"format:check": "biome format ."
+		"format:check": "biome format .",
+		"lint:catalog": "node scripts/check-catalog.mjs"
 	},
 	"engines": {
 		"node": ">=20",
-		"pnpm": ">=8"
+		"pnpm": ">=10.16"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.14",
 		"typescript": "^5.6.0"
 	},
-	"packageManager": "pnpm@9.0.0"
+	"packageManager": "pnpm@10.29.2"
 }

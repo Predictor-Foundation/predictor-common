@@ -9,6 +9,10 @@ permissions:
   pull-requests: write
   packages: write
   id-token: write
+  # Required for actions/attest-build-provenance to write a Sigstore attestation for each
+  # published tarball. (npm-registry provenance does not apply to GitHub Packages, so a build
+  # attestation in the repo's attestation store is the equivalent supply-chain signal here.)
+  attestations: write
 
 jobs:
   release-please:
@@ -48,6 +52,21 @@ jobs:
       - name: build
         run: pnpm -r build
 
+      - name: pack released packages
+        env:
+          PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
+        run: |
+          # Pack each released package into .artifacts/ so the exact published tarball can be attested.
+          mkdir -p "$GITHUB_WORKSPACE/.artifacts"
+          echo "$PATHS_RELEASED" | jq -r '.[]' | while read -r pkg_path; do
+            (cd "$GITHUB_WORKSPACE/$pkg_path" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/.artifacts")
+          done
+
+      - name: attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "${{ github.workspace }}/.artifacts/*.tgz"
+
       - name: publish released packages
         env:
           # Same PAT story as release-please: the auto-provided GITHUB_TOKEN
@@ -57,7 +76,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
         run: |
-          # paths_released is a JSON array of package directories
+          # paths_released is a JSON array of package directories. Publish the tarball packed above so
+          # the published artifact is byte-for-byte the one that was attested.
           echo "$PATHS_RELEASED" | jq -r '.[]' | while read -r pkg_path; do
             echo "publishing $pkg_path"
             cd "$GITHUB_WORKSPACE/$pkg_path"
