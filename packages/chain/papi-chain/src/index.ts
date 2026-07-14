@@ -10,6 +10,8 @@
 //     `D`. The package ships no descriptors and is pinned to no runtime version; the consumer injects
 //     them, and `chain.api()` still returns their `TypedApi<D>`.
 
+import { fileURLToPath } from "node:url";
+import { Worker } from "node:worker_threads";
 import {
 	classifyChainError,
 	PermanentChainError,
@@ -23,6 +25,8 @@ import {
 	type PolkadotSigner,
 	type TypedApi,
 } from "polkadot-api";
+import { getSmProvider } from "polkadot-api/sm-provider";
+import { startFromWorker } from "polkadot-api/smoldot/from-node-worker";
 import { getWsProvider, type SocketLoggerFn, type StatusChange } from "polkadot-api/ws";
 
 // Re-exported so a consumer can type an `onStatusChanged` handler / read `status()` without reaching
@@ -64,13 +68,18 @@ export interface TxFinalized {
 	readonly block: { readonly hash: string; readonly number: number; readonly index: number };
 }
 
-export interface ChainOptions {
-	/** WebSocket endpoint(s). An array enables PAPI's automatic failover/rotation. */
-	readonly endpoint: string | string[];
+/** Options shared by every transport. */
+export interface ChainCommonOptions {
 	/** Per-read RPC timeout (ms). A hung socket must not stall a call. Default 15_000. */
 	readonly readTimeoutMs?: number;
 	/** Submit timeout (ms). A submit resolves only at finalization, so this is far larger. Default 120_000. */
 	readonly submitTimeoutMs?: number;
+}
+
+/** WebSocket transport (the default): one or more RPC endpoints, with automatic failover across them. */
+export interface WsChainOptions extends ChainCommonOptions {
+	/** WebSocket endpoint(s). An array enables PAPI's automatic failover/rotation. */
+	readonly endpoint: string | string[];
 	/**
 	 * Called on every WebSocket status transition (connecting/connected/error/close). A long-lived
 	 * consumer uses it to observe connectivity and re-drive subscriptions after a reconnect; the last
@@ -83,6 +92,33 @@ export interface ChainOptions {
 	readonly logger?: SocketLoggerFn;
 }
 
+/** Configuration for the {@link SmoldotChainOptions} light-client transport. */
+export interface SmoldotChainConfig {
+	/**
+	 * The chain-spec JSON (as a string) smoldot syncs from - a spec carrying the genesis and bootnodes.
+	 * For the Predictor solo chain this is the whole story; a parachain would additionally need its relay
+	 * chain's spec (not modelled here yet).
+	 */
+	readonly chainSpec: string;
+}
+
+/**
+ * smoldot light-client transport: syncs headers from the chain's p2p network and verifies state itself,
+ * so it depends on no single RPC (trust-minimized). The trade-off is a warmup sync and higher in-process
+ * resource use, and a weaker transaction-broadcast path than a well-connected full node - so WebSocket
+ * stays the pragmatic default for a submit-heavy backend, and this is the opt-in for trust-minimization.
+ */
+export interface SmoldotChainOptions extends ChainCommonOptions {
+	readonly smoldot: SmoldotChainConfig;
+}
+
+/**
+ * How the chain boundary connects: a discriminated union on transport - WebSocket ({@link WsChainOptions},
+ * the default, keyed by `endpoint`) or a smoldot light client ({@link SmoldotChainOptions}, keyed by
+ * `smoldot`). Existing `{ endpoint, ... }` callers are unchanged; the smoldot form is purely additive.
+ */
+export type ChainOptions = WsChainOptions | SmoldotChainOptions;
+
 const DEFAULT_READ_TIMEOUT_MS = 15_000;
 const DEFAULT_SUBMIT_TIMEOUT_MS = 120_000;
 
@@ -91,52 +127,73 @@ const DEFAULT_SUBMIT_TIMEOUT_MS = 120_000;
  * {@link ChainBase.disconnect} to tear it (and every chainHead subscription) down.
  */
 export class ChainBase {
-	readonly #endpoint: string | string[];
+	readonly #options: ChainOptions;
 	readonly #readTimeoutMs: number;
 	readonly #submitTimeoutMs: number;
-	readonly #onStatusChanged: ((status: StatusChange) => void) | undefined;
-	readonly #heartbeatTimeout: number | undefined;
-	readonly #logger: SocketLoggerFn | undefined;
 	#lastStatus: StatusChange | undefined;
 	#client: PolkadotClient | undefined;
-	// Bumped on every connect and every disconnect; a status callback records only when its generation is
-	// still current, so a late callback from a torn-down provider cannot repopulate #lastStatus.
+	// The smoldot instance, when the smoldot transport is in use; terminated in disconnect().
+	#smoldot: ReturnType<typeof startFromWorker> | undefined;
+	// Bumped on every connect and every disconnect; a WS status callback records only when its generation
+	// is still current, so a late callback from a torn-down provider cannot repopulate #lastStatus.
 	#generation = 0;
 
 	constructor(options: ChainOptions) {
-		this.#endpoint = options.endpoint;
+		this.#options = options;
 		this.#readTimeoutMs = options.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS;
 		this.#submitTimeoutMs = options.submitTimeoutMs ?? DEFAULT_SUBMIT_TIMEOUT_MS;
-		this.#onStatusChanged = options.onStatusChanged;
-		this.#heartbeatTimeout = options.heartbeatTimeout;
-		this.#logger = options.logger;
 	}
 
-	/** The cached PAPI client (created on first use). */
+	/** The cached PAPI client (created on first use, over the configured WS or smoldot transport). */
 	client(): PolkadotClient {
 		if (!this.#client) {
-			const generation = ++this.#generation;
-			this.#client = createClient(
-				getWsProvider(this.#endpoint, {
-					// Record every transition so `status()` can report the latest even without an app callback,
-					// then forward to the consumer's handler. Callbacks from a provider superseded by a later
-					// disconnect() are dropped via the generation guard.
-					onStatusChanged: (status) => {
-						if (generation !== this.#generation) return;
-						this.#lastStatus = status;
-						this.#onStatusChanged?.(status);
-					},
-					...(this.#heartbeatTimeout !== undefined
-						? { heartbeatTimeout: this.#heartbeatTimeout }
-						: {}),
-					...(this.#logger ? { logger: this.#logger } : {}),
-				}),
-			);
+			const provider =
+				"smoldot" in this.#options
+					? this.#smoldotProvider(this.#options.smoldot)
+					: this.#wsProvider(this.#options);
+			this.#client = createClient(provider);
 		}
 		return this.#client;
 	}
 
-	/** The last observed WebSocket status, or `undefined` before the client has connected. */
+	/** Build a WS provider that records status transitions (generation-guarded) and forwards them on. */
+	#wsProvider(options: WsChainOptions) {
+		const generation = ++this.#generation;
+		const forward = options.onStatusChanged;
+		return getWsProvider(options.endpoint, {
+			// Record every transition so `status()` reports the latest even without an app callback, then
+			// forward. A callback from a provider superseded by a later disconnect() is dropped by the guard.
+			onStatusChanged: (status) => {
+				if (generation !== this.#generation) return;
+				this.#lastStatus = status;
+				forward?.(status);
+			},
+			...(options.heartbeatTimeout !== undefined
+				? { heartbeatTimeout: options.heartbeatTimeout }
+				: {}),
+			...(options.logger ? { logger: options.logger } : {}),
+		});
+	}
+
+	/**
+	 * Build a smoldot light-client provider. smoldot runs in a Node worker thread so its header sync and
+	 * state verification never block the caller's event loop; the instance is held for teardown in
+	 * {@link disconnect}. The chain-factory form (PAPI V2) lets the provider recreate the chain if smoldot
+	 * destroys it during recovery.
+	 */
+	#smoldotProvider(config: SmoldotChainConfig) {
+		const worker = new Worker(
+			fileURLToPath(import.meta.resolve("polkadot-api/smoldot/node-worker")),
+		);
+		const smoldot = startFromWorker(worker);
+		this.#smoldot = smoldot;
+		return getSmProvider(() => smoldot.addChain({ chainSpec: config.chainSpec }));
+	}
+
+	/**
+	 * The last observed WebSocket status, or `undefined` before connecting - and always `undefined` under
+	 * the smoldot transport, which has no WS status transitions.
+	 */
 	status(): StatusChange | undefined {
 		return this.#lastStatus;
 	}
@@ -234,13 +291,15 @@ export class ChainBase {
 		return block.number;
 	}
 
-	/** Tear down the client and all its subscriptions. Idempotent. */
+	/** Tear down the client, its subscriptions, and the smoldot instance (if any). Idempotent. */
 	disconnect(): void {
 		// Invalidate the current provider's status callbacks before tearing it down.
 		this.#generation++;
 		this.#client?.destroy();
 		this.#client = undefined;
 		this.#lastStatus = undefined;
+		this.#smoldot?.terminate();
+		this.#smoldot = undefined;
 	}
 }
 
