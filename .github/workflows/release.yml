@@ -58,7 +58,7 @@ jobs:
         run: |
           # Pack each released package into .artifacts/ so the exact published tarball can be attested,
           # recording pkg_path -> tarball in a manifest the publish step reads back. The manifest is
-          # .txt (not .tgz), so the attestation glob below does not pick it up as a subject.
+          # .tsv (not .tgz), so the attestation glob below does not pick it up as a subject.
           mkdir -p "$GITHUB_WORKSPACE/.artifacts"
           : > "$GITHUB_WORKSPACE/.artifacts/manifest.tsv"
           echo "$PATHS_RELEASED" | jq -r '.[]' | while read -r pkg_path; do

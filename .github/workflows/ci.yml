@@ -30,7 +30,9 @@ jobs:
         run: pnpm -r build
 
       - name: typecheck
-        run: pnpm -r run typecheck
+        run: |
+          pnpm -r run typecheck
+          pnpm -r run types:check
 
       - name: test
         run: pnpm -r run test
