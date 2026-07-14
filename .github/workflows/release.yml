@@ -56,10 +56,15 @@ jobs:
         env:
           PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
         run: |
-          # Pack each released package into .artifacts/ so the exact published tarball can be attested.
+          # Pack each released package into .artifacts/ so the exact published tarball can be attested,
+          # recording pkg_path -> tarball in a manifest the publish step reads back. The manifest is
+          # .txt (not .tgz), so the attestation glob below does not pick it up as a subject.
           mkdir -p "$GITHUB_WORKSPACE/.artifacts"
+          : > "$GITHUB_WORKSPACE/.artifacts/manifest.tsv"
           echo "$PATHS_RELEASED" | jq -r '.[]' | while read -r pkg_path; do
-            (cd "$GITHUB_WORKSPACE/$pkg_path" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/.artifacts")
+            tarball=$(cd "$GITHUB_WORKSPACE/$pkg_path" \
+              && pnpm pack --pack-destination "$GITHUB_WORKSPACE/.artifacts" | tail -n 1)
+            printf '%s\t%s\n' "$pkg_path" "$tarball" >> "$GITHUB_WORKSPACE/.artifacts/manifest.tsv"
           done
 
       - name: attest build provenance
@@ -74,13 +79,10 @@ jobs:
           # workflow, so we reuse RELEASE_PLEASE_TOKEN (which carries the
           # write:packages scope) for publishing too.
           NODE_AUTH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
         run: |
-          # paths_released is a JSON array of package directories. Publish the tarball packed above so
-          # the published artifact is byte-for-byte the one that was attested.
-          echo "$PATHS_RELEASED" | jq -r '.[]' | while read -r pkg_path; do
-            echo "publishing $pkg_path"
-            cd "$GITHUB_WORKSPACE/$pkg_path"
-            pnpm publish --no-git-checks --access restricted
-            cd "$GITHUB_WORKSPACE"
-          done
+          # Publish the exact tarball packed (and attested) above - not a fresh `pnpm publish` repack -
+          # so the published artifact is byte-for-byte the one `gh attestation verify` will look up.
+          while IFS=$'\t' read -r pkg_path tarball; do
+            echo "publishing $pkg_path from $tarball"
+            pnpm publish "$tarball" --no-git-checks --access restricted
+          done < "$GITHUB_WORKSPACE/.artifacts/manifest.tsv"

@@ -72,8 +72,11 @@ export function parseSuri(secret: string): Suri {
  * site can forget the wipe and leave a mini-secret lingering on the heap where a later leak could expose
  * it. Only the *seed* is zeroable; the derived secret key lives inside the keypair's `sign` closure
  * (owned by `@polkadot-labs/hdkd`) and is not reachable to wipe - shrinking the exposure window is the
- * aim, not eliminating in-memory key material. Safe because hdkd derives eagerly: by the time `use`
- * returns, the seed has been read and the derived key copied out, so wiping cannot corrupt it.
+ * aim, not eliminating in-memory key material. Safe because the sign closure never aliases this buffer:
+ * for a junction-less SURI (raw `0x` seed or bare mnemonic, `path === ""`) hdkd does no derivation and
+ * would otherwise return the seed itself, but `@polkadot-labs/hdkd-helpers`' `ensureBytes` first copies
+ * it via `Uint8Array.from`, so the closure holds a distinct buffer and wiping this one cannot corrupt it.
+ * That copy is a dependency-internal detail, so the signing-after-wipe tests guard it explicitly.
  */
 function withSeed<T>(seed: Uint8Array, use: (seed: Uint8Array) => T): T {
 	try {

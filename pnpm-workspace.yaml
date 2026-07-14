@@ -17,7 +17,8 @@ onlyBuiltDependencies: []
 # --- Dependency catalog ---
 # Single source of truth for the third-party versions shared across packages. Each package
 # references `catalog:` instead of a literal range, so upgrading is one edit here and a version
-# can never drift between packages. Enforced by `syncpack lint` in CI and pre-commit. (react is
+# can never drift between packages. Enforced by `scripts/check-catalog.mjs` (run as `lint:catalog`
+# in CI and pre-commit). (react is
 # intentionally left out - its version story differs across the web packages and is not a
 # single-version dependency.)
 catalog:

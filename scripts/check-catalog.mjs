@@ -6,7 +6,27 @@
 // Purpose-built (and dependency-free) rather than syncpack because the syncpack version our supply-chain
 // cooldown allows does not yet understand the `catalog:` protocol and reports every catalog ref as an error.
 
-import { globSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+
+// Find every package.json in the two-level `packages/<group>/<name>` layout the workspace uses,
+// using only `readdirSync` so the script runs on the repo's Node floor (>=20). `fs.globSync` is
+// Node >=22 only and would throw `globSync is not a function` in pre-commit/CI on Node 20/21.
+function packageManifests() {
+	const packagesRoot = new URL("../packages/", import.meta.url);
+	const manifests = [];
+	for (const group of readdirSync(packagesRoot, { withFileTypes: true })) {
+		if (!group.isDirectory()) continue;
+		const groupDir = new URL(`${group.name}/`, packagesRoot);
+		for (const pkg of readdirSync(groupDir, { withFileTypes: true })) {
+			if (!pkg.isDirectory()) continue;
+			const url = new URL(`${pkg.name}/package.json`, groupDir);
+			if (existsSync(url)) {
+				manifests.push({ url, display: `packages/${group.name}/${pkg.name}/package.json` });
+			}
+		}
+	}
+	return manifests;
+}
 
 /** Extract the dependency names listed under the top-level `catalog:` block of pnpm-workspace.yaml. */
 function catalogNames(workspaceYaml) {
@@ -31,19 +51,19 @@ if (catalog.size === 0) {
 }
 
 const violations = [];
-for (const file of globSync("packages/*/*/package.json")) {
+for (const { url, display } of packageManifests()) {
 	let pkg;
 	try {
-		pkg = JSON.parse(readFileSync(file, "utf8"));
+		pkg = JSON.parse(readFileSync(url, "utf8"));
 	} catch (err) {
-		console.error(`check-catalog: cannot parse ${file}: ${err.message}`);
+		console.error(`check-catalog: cannot parse ${display}: ${err.message}`);
 		process.exit(1);
 	}
 	// peerDependencies intentionally declare broad compatibility ranges, so they are exempt.
 	for (const field of ["dependencies", "devDependencies"]) {
 		for (const [name, range] of Object.entries(pkg[field] ?? {})) {
 			if (catalog.has(name) && range !== "catalog:") {
-				violations.push(`${file} > ${field} > ${name}: "${range}" (must be "catalog:")`);
+				violations.push(`${display} > ${field} > ${name}: "${range}" (must be "catalog:")`);
 			}
 		}
 	}
