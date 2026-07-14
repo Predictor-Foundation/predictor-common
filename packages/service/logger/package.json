@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/logger",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Tiny dependency-free structured JSON-lines logger (level-filtered, stdout/stderr split) for the Predictor Foundation services",
 	"license": "UNLICENSED",
 	"private": false,

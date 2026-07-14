@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/Predictor-Foundation/predictor-common/compare/git-hooks-v0.4.2...git-hooks-v0.4.3) (2026-07-14)
+
+
+### Features
+
+* **packages:** harden secrets, add connection observability, and pnpm catalog + supply-chain cooldown ([#17](https://github.com/Predictor-Foundation/predictor-common/issues/17)) ([1bcb6e2](https://github.com/Predictor-Foundation/predictor-common/commit/1bcb6e24b15bfbeeb493b35804cdc075bf70aa8b))
+
 ## [0.4.2](https://github.com/Predictor-Foundation/predictor-common/compare/git-hooks-v0.4.1...git-hooks-v0.4.2) (2026-07-06)
 
 

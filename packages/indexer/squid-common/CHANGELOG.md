@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/Predictor-Foundation/predictor-common/compare/squid-common-v1.4.0...squid-common-v1.5.0) (2026-07-14)
+
+
+### Features
+
+* **packages:** harden secrets, add connection observability, and pnpm catalog + supply-chain cooldown ([#17](https://github.com/Predictor-Foundation/predictor-common/issues/17)) ([1bcb6e2](https://github.com/Predictor-Foundation/predictor-common/commit/1bcb6e24b15bfbeeb493b35804cdc075bf70aa8b))
+
 ## [1.4.0](https://github.com/Predictor-Foundation/predictor-common/compare/squid-common-v1.3.1...squid-common-v1.4.0) (2026-07-06)
 
 
