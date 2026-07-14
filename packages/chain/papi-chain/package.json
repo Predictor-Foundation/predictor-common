@@ -26,7 +26,7 @@
 		"README.md"
 	],
 	"engines": {
-		"node": ">=20"
+		"node": ">=20.6"
 	},
 	"scripts": {
 		"build": "rm -rf lib *.tsbuildinfo && tsc",

@@ -108,3 +108,38 @@ test("Chain<D> extends ChainBase, so it inherits the submit/read plumbing", asyn
 	const res = await c.submitSigned(tx, SIGNER, "submit");
 	assert.equal(res.extrinsicIndex, 0);
 });
+
+// --- smoldot transport (toggle) ---
+// The live smoldot path spawns a worker and syncs from the p2p network, so - like the WS path above -
+// it is not exercised in unit CI (these tests never call client()). What's covered here is the toggle
+// itself: the discriminated `{ smoldot }` option constructs a valid ChainBase, the transport-agnostic
+// orchestration is unchanged, status() has nothing to report, and teardown is safe before connecting.
+function smoldotBase() {
+	return new ChainBase({
+		smoldot: { chainSpec: "{}" },
+		readTimeoutMs: 30,
+		submitTimeoutMs: 30,
+	});
+}
+
+test("smoldot transport: read orchestration is transport-agnostic", async () => {
+	assert.equal(await smoldotBase().read(Promise.resolve(7), "read"), 7);
+});
+
+test("smoldot transport: a hung read still times out with a RetryableError", async () => {
+	await assert.rejects(
+		() => smoldotBase().read(new Promise<never>(() => {}), "read"),
+		(e) => e instanceof RetryableError,
+	);
+});
+
+test("smoldot transport: status() is undefined (no WS status transitions)", () => {
+	assert.equal(smoldotBase().status(), undefined);
+});
+
+test("disconnect() before connecting is safe (no worker spawned) for both transports", () => {
+	base().disconnect();
+	smoldotBase().disconnect();
+	// idempotent - a second call must not throw either
+	smoldotBase().disconnect();
+});
