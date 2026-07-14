@@ -1,6 +1,6 @@
 {
 	"name": "@predictor-foundation/network-constants",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Single source of truth for Predictor network coordinates: SS58 prefix, token decimals/symbol, WS endpoints, explorer base URLs and deep-link builders",
 	"license": "UNLICENSED",
 	"private": false,

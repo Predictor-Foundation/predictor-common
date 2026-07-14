@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/Predictor-Foundation/predictor-common/compare/network-constants-v0.1.1...network-constants-v0.1.2) (2026-07-14)
+
+
+### Features
+
+* **packages:** harden secrets, add connection observability, and pnpm catalog + supply-chain cooldown ([#17](https://github.com/Predictor-Foundation/predictor-common/issues/17)) ([1bcb6e2](https://github.com/Predictor-Foundation/predictor-common/commit/1bcb6e24b15bfbeeb493b35804cdc075bf70aa8b))
+
 ## [0.1.1](https://github.com/Predictor-Foundation/predictor-common/compare/network-constants-v0.1.0...network-constants-v0.1.1) (2026-07-06)
 
 
