@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { DEV_PHRASE, sr25519 } from "@polkadot-labs/hdkd-helpers";
 import { AccountUtils, deriveDev, deriveKeypair, parseSuri } from "../src/index.ts";
 
 // Well-known //Alice on the generic substrate prefix (42).
@@ -20,6 +21,24 @@ test("deriveKeypair exposes a PAPI signer and a raw sign", () => {
 	const sig = kp.sign(new Uint8Array([1, 2, 3]));
 	assert.equal(sig.length, 64); // sr25519 signature
 });
+
+// The seed-wipe safety argument (see withSeed) hinges on the sign closure never aliasing the
+// mini-secret for a *junction-less* SURI, the one path where hdkd does no derivation and would
+// otherwise return the seed itself. deriveKeypair wipes the seed before returning, so a signature
+// that still verifies here proves the closure holds a distinct buffer, not the zeroed seed.
+for (const [label, secret] of [
+	["raw 0x mini-secret", `0x${"11".repeat(32)}`],
+	["bare dev mnemonic (no junction)", DEV_PHRASE],
+] as const) {
+	test(`deriveKeypair(${label}) still signs and verifies after the seed wipe`, () => {
+		const kp = deriveKeypair(secret);
+		assert.equal(parseSuri(secret).path, ""); // junction-less: the aliasing-risk path
+		const message = new Uint8Array([4, 5, 6, 7]);
+		const sig = kp.sign(message);
+		assert.equal(sig.length, 64); // sr25519 signature
+		assert.equal(sr25519.verify(sig, message, kp.publicKey), true);
+	});
+}
 
 test("parseSuri accepts a 0x mini-secret seed", () => {
 	const seed = `0x${"11".repeat(32)}`;

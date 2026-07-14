@@ -48,6 +48,104 @@ export interface LoggerOptions {
 	base?: LogFields;
 	/** Source of the fallback `LOG_LEVEL`; defaults to `process.env`. */
 	env?: Record<string, string | undefined>;
+	/**
+	 * Words/field names (matched at any depth) whose values are replaced with `[redacted]` before a line
+	 * is written. Matching is by WORD BOUNDARY, not exact equality: a field is redacted if its full
+	 * lower-cased name is in the set, OR any of its camelCase / snake_case / kebab-case words is - so
+	 * `token` catches `accessToken`, `refresh_token`, and `auth-token` alike. Defaults to
+	 * {@link DEFAULT_REDACT_KEYS}. Pass `[]` to disable. Redaction is by KEY, not by value shape: a secret
+	 * seed and an on-chain tx hash are both `0x`+64 hex, so value-pattern redaction would destroy the tx
+	 * hashes/addresses you actually want in logs. This biases toward OVER-redaction: an ambiguous field
+	 * like `seedNode` or `tokenCount` is redacted because it contains a sensitive word, which is the safe
+	 * default for a security feature. Keep secrets in named fields (never interpolated into `msg`).
+	 */
+	redactKeys?: readonly string[];
+}
+
+/**
+ * Words redacted by default. Because matching is by WORD BOUNDARY (see {@link LoggerOptions.redactKeys}),
+ * a single word like `secret` also covers `clientSecret`, `secret_key`, and `secret-key`; the entries
+ * below that are joined compounds (`apikey`, `privatekey`, `secretkey`, `minisecret`) exist only to catch
+ * the forms whose words - `api`, `key`, `mini` - are too generic to redact on their own. Covers the
+ * secret material a chain service might accidentally pass in a log field - secret URIs, seeds, mnemonics,
+ * private keys, passwords, tokens, credentials, authorization headers.
+ */
+export const DEFAULT_REDACT_KEYS: readonly string[] = [
+	"suri",
+	"secret",
+	"seed",
+	"mnemonic",
+	"password",
+	"token",
+	"credential",
+	"credentials",
+	"authorization",
+	"apikey",
+	"privatekey",
+	"secretkey",
+	"minisecret",
+];
+
+/** The marker a redacted value is replaced with. */
+const REDACTED = "[redacted]";
+/** The marker substituted for a value already seen on the current path (an accidental cycle). */
+const CIRCULAR = "[circular]";
+
+/** True only for a `{}`-style record; the sole object kind {@link redact} traverses and rebuilds. */
+function isPlainRecord(value: object): boolean {
+	const proto = Object.getPrototypeOf(value);
+	return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Split a field name into lower-cased words on camelCase boundaries and `_`, `-`, and digit separators,
+ * so `accessToken` -> `["access", "token"]` and `db_password` -> `["db", "password"]`. Used by
+ * {@link isRedactKey} to catch compound names whose sensitive part is only one word.
+ */
+function splitWords(name: string): string[] {
+	return name
+		.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+		.split(/[^a-zA-Z]+/)
+		.filter((w) => w.length > 0)
+		.map((w) => w.toLowerCase());
+}
+
+/** A field is redacted if its full lower-cased name is in `keys`, or any of its words is. */
+function isRedactKey(name: string, keys: Set<string>): boolean {
+	if (keys.has(name.toLowerCase())) return true;
+	return splitWords(name).some((w) => keys.has(w));
+}
+
+/**
+ * Deep-copy `value`, replacing any value whose key matches `keys` (see {@link isRedactKey}) with {@link REDACTED}.
+ * Only arrays and plain records are traversed and rebuilt; a `Date`, `Map`/`Set`, typed array, `Error`,
+ * or class instance is passed through untouched, so redaction never degrades its serialization (a `Date`
+ * must still log as its ISO string, not `{}`). `seen` guards against an accidental reference cycle
+ * recursing until the stack overflows before `write` could stringify it.
+ */
+function redact(value: unknown, keys: Set<string>, seen: WeakSet<object> = new WeakSet()): unknown {
+	// `seen` is PATH-scoped (added before descending, removed after) so a true cycle renders as
+	// "[circular]" while a value merely aliased under two sibling keys (a diamond) still serializes fully.
+	if (Array.isArray(value)) {
+		if (seen.has(value)) return CIRCULAR;
+		seen.add(value);
+		const mapped = value.map((v) => redact(v, keys, seen));
+		seen.delete(value);
+		return mapped;
+	}
+	if (value !== null && typeof value === "object") {
+		if (!isPlainRecord(value)) return value; // Date, Map/Set, Error, typed array, class instance
+		if (seen.has(value)) return CIRCULAR;
+		seen.add(value);
+		const out: Record<string, unknown> = {};
+		for (const [k, v] of Object.entries(value)) {
+			out[k] = isRedactKey(k, keys) ? REDACTED : redact(v, keys, seen);
+		}
+		seen.delete(value);
+		return out;
+	}
+	return value;
 }
 
 /** Parse an untrusted level string into a `LogLevel`, or `null` if unknown. */
@@ -77,12 +175,16 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 	const level = options.level ?? parseLogLevel(env.LOG_LEVEL) ?? "info";
 	const minLevel = LEVEL_ORDER[level];
 	const base = options.base ?? {};
+	const redactKeys = new Set(
+		(options.redactKeys ?? DEFAULT_REDACT_KEYS).map((k) => k.toLowerCase()),
+	);
 
 	const emit = (at: LogLevel, msg: string, fields?: LogFields): void => {
 		if (LEVEL_ORDER[at] < minLevel) {
 			return;
 		}
-		write(at, msg, fields ? { ...base, ...fields } : base);
+		const merged = fields ? { ...base, ...fields } : base;
+		write(at, msg, redactKeys.size > 0 ? (redact(merged, redactKeys) as LogFields) : merged);
 	};
 
 	return {
@@ -90,7 +192,9 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 		info: (msg, fields) => emit("info", msg, fields),
 		warn: (msg, fields) => emit("warn", msg, fields),
 		error: (msg, fields) => emit("error", msg, fields),
-		child: (bindings) => createLogger({ level, base: { ...base, ...bindings }, env }),
+		// Carry redactKeys into children so a bound sub-logger keeps the same redaction policy.
+		child: (bindings) =>
+			createLogger({ level, base: { ...base, ...bindings }, env, redactKeys: options.redactKeys }),
 	};
 }
 

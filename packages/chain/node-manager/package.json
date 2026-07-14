@@ -38,8 +38,8 @@
 		"@predictor-foundation/scale": "workspace:*"
 	},
 	"devDependencies": {
-		"@polkadot-api/substrate-bindings": "^0.20.3",
-		"@types/node": "^22.0.0",
-		"typescript": "^5.6.0"
+		"@polkadot-api/substrate-bindings": "catalog:",
+		"@types/node": "catalog:",
+		"typescript": "catalog:"
 	}
 }
