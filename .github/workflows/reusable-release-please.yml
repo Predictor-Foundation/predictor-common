@@ -2,6 +2,14 @@
 # byte-identical `release-please.yml`; this is the single source of truth they
 # call instead of each carrying their own copy.
 #
+# It authenticates as the release-bot GitHub App, so release PRs are authored by
+# <app>[bot] rather than a human's PAT. An app is required because the
+# Predictor-Foundation org disables Actions (the auto-provided GITHUB_TOKEN) from
+# creating/approving PRs. Credentials are org-level: the App ID is the
+# PRD_RELEASE_PLEASE_APP_ID org variable (read directly via the vars context) and
+# the private key is the PRD_RELEASE_PLEASE_APP_PRIVATE_KEY org secret (reusable
+# workflows only receive secrets via `secrets: inherit`, so callers must pass it).
+#
 # Caller (in a consumer repo, e.g. .github/workflows/release-please.yml):
 #
 #   name: Release Please
@@ -14,11 +22,10 @@
 #   jobs:
 #     release-please:
 #       uses: Predictor-Foundation/predictor-common/.github/workflows/reusable-release-please.yml@main
-#       secrets:
-#         release-please-token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+#       secrets: inherit
 #
 # The config-file / manifest-file inputs default to the repo-root filenames every
-# repo already uses, so most callers pass only the secret.
+# repo already uses, so most callers pass only `secrets: inherit`.
 
 name: Reusable Release Please
 
@@ -33,13 +40,6 @@ on:
         description: Path to the release-please manifest file.
         type: string
         default: .release-please-manifest.json
-    secrets:
-      release-please-token:
-        description: >-
-          Fine-grained PAT with contents:write + pull-requests:write. Required
-          because the Predictor-Foundation org disables Actions from creating or
-          approving PRs, so the auto-provided GITHUB_TOKEN cannot do it.
-        required: true
 
 jobs:
   release-please:
@@ -48,13 +48,22 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Generate bot token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.PRD_RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.PRD_RELEASE_PLEASE_APP_PRIVATE_KEY }}
+
       - uses: googleapis/release-please-action@v4
         id: release-please
         with:
-          token: ${{ secrets.release-please-token }}
+          token: ${{ steps.app-token.outputs.token }}
           config-file: ${{ inputs.config-file }}
           manifest-file: ${{ inputs.manifest-file }}
 
+      # Approve with the default GITHUB_TOKEN (github-actions[bot]) - a different
+      # identity from the app bot that opened the PR, so the approval is accepted.
       - name: Auto approve
         if: steps.release-please.outputs.prs_created == 'true'
         run: gh pr review --approve "${{ fromJSON(steps.release-please.outputs.pr).number }}"

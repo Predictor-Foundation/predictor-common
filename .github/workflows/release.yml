@@ -21,21 +21,42 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
+      # Mint a short-lived installation token for the release-bot GitHub App so the
+      # release PR is authored by <app>[bot] instead of a human's PAT. An app (or PAT)
+      # is required because the Predictor-Foundation org disables Actions (the
+      # auto-provided GITHUB_TOKEN) from creating/approving PRs. The app must have
+      # contents:write + pull-requests:write + packages:write on this repo; its App ID
+      # lives in the PRD_RELEASE_PLEASE_APP_ID org variable and its private key in the
+      # PRD_RELEASE_PLEASE_APP_PRIVATE_KEY org secret.
+      - name: Generate bot token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.PRD_RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.PRD_RELEASE_PLEASE_APP_PRIVATE_KEY }}
+
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          # PAT is required because the Predictor-Foundation org disables Actions
-          # from creating/approving PRs. Set RELEASE_PLEASE_TOKEN to a fine-grained
-          # PAT with contents:write + pull-requests:write on this repo.
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
   publish:
     needs: release-please
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
     steps:
+      # Mint an installation token for package publishing. The app carries
+      # packages:write, which the auto-provided GITHUB_TOKEN lacks for packages
+      # first published outside the workflow.
+      - name: Generate bot token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.PRD_RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.PRD_RELEASE_PLEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
@@ -74,11 +95,10 @@ jobs:
 
       - name: publish released packages
         env:
-          # Same PAT story as release-please: the auto-provided GITHUB_TOKEN
-          # doesn't have write access to packages first published outside the
-          # workflow, so we reuse RELEASE_PLEASE_TOKEN (which carries the
-          # write:packages scope) for publishing too.
-          NODE_AUTH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          # The app installation token (packages:write) authenticates the publish;
+          # the auto-provided GITHUB_TOKEN cannot write packages first published
+          # outside the workflow.
+          NODE_AUTH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           # Publish the exact tarball packed (and attested) above - not a fresh `pnpm publish` repack -
           # so the published artifact is byte-for-byte the one `gh attestation verify` will look up.
