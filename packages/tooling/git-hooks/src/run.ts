@@ -12,7 +12,9 @@ type Step = "pre-commit" | "commit-msg";
  * Steps:
  *
  *   - pre-commit  runs format -> lint -> typecheck -> audit, fast-failing
- *                 on the first non-zero exit.
+ *                 on the first non-zero exit. Exception: `audit` warns and
+ *                 continues (rather than aborting) when its advisory backend
+ *                 is unreachable, since that is not a signal about the commit.
  *   - commit-msg  validates the commit message file (passed as $1 by
  *                 husky) against a Conventional Commits shape check.
  *                 Shape only - scope values are not enforced here; the
@@ -31,20 +33,63 @@ export function run(step: string, args: string[]): number {
 	}
 }
 
+type HookStep = {
+	name: string;
+	cmd: string;
+	args: string[];
+	/**
+	 * When the command exits non-zero, classify the failure from its combined
+	 * stdout+stderr: return true to warn-and-continue instead of aborting the
+	 * commit. Used for `audit`, whose backend (npm's advisory endpoint) can be
+	 * unreachable or retired for reasons unrelated to the code being committed.
+	 * A real advisory prints a vulnerability report (no transport-error marker),
+	 * so it still aborts.
+	 */
+	tolerateFailure?: (output: string) => boolean;
+};
+
+// pnpm posts audit queries to npm's advisory endpoint. When that endpoint is
+// unreachable or retired (HTTP 410 -> ERR_PNPM_AUDIT_BAD_RESPONSE) the audit
+// cannot run at all - that is not a signal about the commit, so it must not
+// block it. An actual advisory prints the vulnerability report instead, which
+// does not match, so real findings still abort.
+const AUDIT_BACKEND_UNAVAILABLE =
+	/ERR_PNPM_AUDIT_BAD_RESPONSE|ERR_PNPM_AUDIT_ENDPOINT|audit endpoint|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN/;
+
 function runPreCommit(): number {
-	const steps: Array<{ name: string; cmd: string; args: string[] }> = [
+	const steps: HookStep[] = [
 		{ name: "format", cmd: "pnpm", args: ["exec", "biome", "format", "--write", "."] },
 		{ name: "lint", cmd: "pnpm", args: ["exec", "biome", "check", "."] },
 		{ name: "typecheck", cmd: "pnpm", args: ["-r", "exec", "tsc", "--noEmit"] },
-		{ name: "audit", cmd: "pnpm", args: ["audit", "--prod", "--audit-level=high"] },
+		{
+			name: "audit",
+			cmd: "pnpm",
+			args: ["audit", "--prod", "--audit-level=high"],
+			tolerateFailure: (output) => AUDIT_BACKEND_UNAVAILABLE.test(output),
+		},
 	];
 
-	for (const { name, cmd, args } of steps) {
+	for (const { name, cmd, args, tolerateFailure } of steps) {
 		process.stdout.write(`\n[predictor-git-hooks] ${name}\n`);
-		const result = spawnSync(cmd, args, { stdio: "inherit" });
+		// Steps with a failure classifier need their output captured so we can
+		// inspect it; the rest stream straight through for live feedback.
+		const result = tolerateFailure
+			? spawnSync(cmd, args, { encoding: "utf8" })
+			: spawnSync(cmd, args, { stdio: "inherit" });
+		if (tolerateFailure) {
+			if (result.stdout) process.stdout.write(result.stdout);
+			if (result.stderr) process.stderr.write(result.stderr);
+		}
 		if (result.status !== 0) {
-			process.stderr.write(`\n[predictor-git-hooks] ${name} failed - commit aborted\n`);
-			return result.status ?? 1;
+			const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+			if (tolerateFailure?.(output)) {
+				process.stderr.write(
+					`\n[predictor-git-hooks] ${name} could not reach its backend - skipping (not blocking the commit)\n`,
+				);
+			} else {
+				process.stderr.write(`\n[predictor-git-hooks] ${name} failed - commit aborted\n`);
+				return result.status ?? 1;
+			}
 		}
 		// After the format step, re-stage files Biome may have rewritten
 		// so the commit sees the fixed content rather than the pre-format
